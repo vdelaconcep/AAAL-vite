@@ -1,0 +1,11 @@
+{
+    "extends": "@tsconfig/node20/tsconfig.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext"
+    },
+    "include": ["src/**/*"]
+}

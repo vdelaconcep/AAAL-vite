@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Header banner */
+@font-face {
+  font-family: "Alex";
+  src: url(./fonts/MrAlex-Bold.ttf);
+}
+
+@font-face {
+  font-family: 'Alex';
+  src: url('/fonts/MrAlex-Bold.woff2') format('woff2'),
+    url('/fonts/MrAlex-Bold.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.mrAlex {
+  font-family: "Alex",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+/* Sponsors marquee */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: scroll 40s linear infinite;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Carousel controls*/
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  @apply text-lg text-gray-300;
+}
+
+.swiper-pagination-bullet-active {
+  @apply bg-gray-300 opacity-100;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
