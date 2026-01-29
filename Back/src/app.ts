@@ -4,8 +4,8 @@ import cors from "cors";
 
 import comisionRouter from './routes/comisionRouter.js';
 import usersRouter from './routes/usersRouter.js';
-
-/*import contactoRouter from './routes/contactoRouter.js';
+import messagesRouter from './routes/messagesRouter.js'
+/*
 import comunidadRouter from './routes/comunidadRouter.js';
 import galeriaRouter from './routes/galeriaRouter.js';
 import vehiculosRouter from './routes/vehiculosRouter.js';
@@ -25,7 +25,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/comision', comisionRouter)
 app.use('/api/users', usersRouter)
-/*app.use('/api/contacto', contactoRouter);
+app.use('/api/messages', messagesRouter);
+/*
 app.use('/api/comunidad', comunidadRouter);
 app.use('/api/galeria', galeriaRouter);
 app.use('/api/vehiculos', vehiculosRouter);

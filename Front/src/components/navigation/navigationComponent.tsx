@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import MenuButton from "@/components/navigation/menuButton";
 import { websiteMap } from "@/components/navigation/websiteMap";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { clearString } from "@/utils/clearString";
 
 
@@ -18,6 +18,12 @@ export default function NavigationComponent() {
     const toggleDisplay = (section: string): void => {
         setDisplayList(displayList === section ? null : section)
     };
+
+    const location = useLocation();
+
+    const isMainSection = useMemo(() => {
+        return location.pathname === '/';
+    }, [location.pathname])
 
     useEffect(() => {
         const closeMenuOrList = (e: Event) => {
@@ -50,8 +56,9 @@ export default function NavigationComponent() {
                 }}
                 transition={{ duration: 0.3 }}
             >
-                {websiteMap.map((section) => (
-                    <li
+                {websiteMap.map((section) => {
+                    if (section.sectionTitle === 'Principal' && isMainSection) return null
+                    return <li
                         key={section.sectionTitle}
                         className="relative cursor-pointer font-medium w-full md:w-auto md:border-none"
                         onMouseLeave={() => {
@@ -62,7 +69,7 @@ export default function NavigationComponent() {
                         <button
                             className="cursor-pointer md:text-shadow-xs md:text-shadow-gray-800 hover:text-white rounded p-2 px-4 w-full text-left md:text-center text-lg font-bold md:text-xl md:font-medium"
                             aria-expanded={displayList === section.sectionTitle}
-                            aria-haspopup={section.subSections? true : undefined}
+                            aria-haspopup={section.subSections ? true : undefined}
                             onMouseOver={() => {
                                 if (window.innerWidth >= 768) {
                                     toggleDisplay(section.sectionTitle);
@@ -76,8 +83,8 @@ export default function NavigationComponent() {
                                 }
                             }}
                         >
-                            {section.subSections ? section.sectionTitle : 
-                            <Link to={`/${clearString(section.sectionTitle)}`}>{section.sectionTitle}</Link>}
+                            {section.subSections ? section.sectionTitle :
+                                <Link to={section.sectionTitle === 'Principal' ? '/' : `/${clearString(section.sectionTitle)}`}>{section.sectionTitle}</Link>}
                         </button>
                         
                         {/* Desktop */}
@@ -123,7 +130,7 @@ export default function NavigationComponent() {
                             </>
                         )}
                     </li>
-                ))}
+                })}
             </motion.ul>
         </nav>
     )

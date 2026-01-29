@@ -25,7 +25,6 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<PrincipalComponent />} />
-              <Route path='/principal' element={<PrincipalComponent />} />
               {/* <Route path='/nosotros/quienessomos' element={<QuienesSomos />} />
               <Route path='/nosotros/historia' element={<Historia />} />
               <Route path='/nosotros/comisiondirectiva' element={<Comision />} />
