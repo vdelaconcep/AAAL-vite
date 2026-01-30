@@ -9,11 +9,10 @@ import { useEffect } from "react";
 
 interface ContactFormProps {
     onSubmit: (arg: FormDataType) => void
-    sendingMessage: boolean
-    messageSent: boolean
+    messageStatus: '' | 'sent' | 'sending'
 }
 
-export default function ContactForm({onSubmit, sendingMessage, messageSent}: ContactFormProps) {
+export default function ContactForm({onSubmit, messageStatus}: ContactFormProps) {
 
     const validationSchema: Yup.ObjectSchema<FormDataType> = Yup.object({
         name: Yup.string()
@@ -46,8 +45,8 @@ export default function ContactForm({onSubmit, sendingMessage, messageSent}: Con
     });
 
     useEffect(() => {
-        if (messageSent) reset()
-    }, [messageSent])
+        if (messageStatus === 'sent') reset()
+    }, [messageStatus])
     
     return (
         <form
@@ -111,9 +110,9 @@ export default function ContactForm({onSubmit, sendingMessage, messageSent}: Con
                     secondary= {true}/>
                 <MainButton
                     type='submit'
-                    text={sendingMessage ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Enviar'}
+                    text={messageStatus === 'sending' ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Enviar'}
                     addClass='w-1/2 rounded-lg'
-                    disabled={sendingMessage} />
+                    disabled={messageStatus === 'sending' || messageStatus === 'sent'} />
             </article>
         </form>
     )

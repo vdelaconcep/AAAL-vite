@@ -18,8 +18,7 @@ export default function ContactComponent() {
 
     const { showAlert } = useAlert();
 
-    const [sendingMessage, setSendingMessage] = useState(false);
-    const [messageSent, setMessageSent] = useState(false);
+    const [messageStatus, setMessageStatus] = useState<'' | 'sent' | 'sending'>('');
     
 
     const onSubmit = async (data: FormDataType) => {
@@ -29,27 +28,27 @@ export default function ContactComponent() {
         }
 
         try {
-            setSendingMessage(true);
+            setMessageStatus('sending');
             const res = await sendMessage(dataToSend);
 
             if (res.status !== 200) {
                 const alertMessage = `Error al enviar mensaje: ${res.statusText}`;
                 showAlert(alertMessage);
+                setMessageStatus('')
                 return;
             };
 
             const alertMessage = 'Mensaje enviado';
-            setMessageSent(true)
-            showAlert(alertMessage, {addAction: () => setMessageSent(false)});
+            setMessageStatus('sent')
+            showAlert(alertMessage, {addAction: () => setMessageStatus('')});
             return;
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
             const alertMessage = `Error al enviar mensaje: ${errorMessage}`;
             showAlert(alertMessage);
+            setMessageStatus('')
             return;
-        } finally {
-            setSendingMessage(false)
         }
     };
 
@@ -68,8 +67,7 @@ export default function ContactComponent() {
                 viewport={{ once: true, amount: 0.2 }}>
                 <ContactForm
                     onSubmit={onSubmit}
-                    sendingMessage={sendingMessage}
-                    messageSent={messageSent} />
+                    messageStatus={messageStatus} />
             </motion.div>
             
 

@@ -1,9 +1,14 @@
-interface CommitteeMemberCardProps {
+interface ComisionMemberCardProps {
     members: string[]
     position: string
 }
 
-export default function CommitteeMembersCard({ members, position }: CommitteeMemberCardProps) {
+export default function ComisionMembersCard({ members, position }: ComisionMemberCardProps) {
+    /* const positionToShow = (arg: string) => {
+        if (/[A-Z]/.test(char)) {
+            console.log('Es mayúscula');
+        }
+    } */
     const background = position === 'Presidente' ? '#6E1538' :
         position === 'Vicepresidente' || position === 'Tesorero' || position === 'Revisores de cuentas' ? '#6B9795' : '#A0AB94'
     return (
