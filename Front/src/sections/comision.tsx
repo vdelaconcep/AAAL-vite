@@ -2,7 +2,7 @@ import { getCommittee } from "@/services/comisionServices";
 import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useAlert } from "@/context/alertContext";
-import CommitteeMembersCard from "@/components/committee/committeeMemberCard";
+import CommitteeMembersCard from "@/components/comision/committeeMemberCard";
 import LoadingComponent from "@/components/ui/loadingComponent";
 import axios from 'axios';
 
