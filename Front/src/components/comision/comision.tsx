@@ -1,4 +1,4 @@
-import { getCommittee } from "@/services/comisionServices";
+import { getSelected } from "@/services/comisionServices";
 import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useAlert } from "@/context/alertContext";
@@ -6,11 +6,13 @@ import CommitteeMembersCard from "@/components/comision/committeeMemberCard";
 import LoadingComponent from "@/components/ui/loadingComponent";
 import axios from 'axios';
 
-export default function Comision() {
+export default function ComisionComponent() {
 
     const { showAlert } = useAlert();
 
     const [data, setData] = useState<{
+        fromDate: string,
+        toDate?: string,
         presidente: string,
         vicepresidente: string,
         secretario: string,
@@ -19,8 +21,11 @@ export default function Comision() {
         protesorero: string,
         vocalesTitulares: string[],
         vocalesSuplentes: string[],
-        revisoresDeCuentas: string[]
+        revisoresDeCuentas: string[],
+        created_at: string
     }>({
+        fromDate: '',
+        toDate: '',
         presidente: '',
         vicepresidente: '',
         secretario: '',
@@ -29,7 +34,8 @@ export default function Comision() {
         protesorero: '',
         vocalesTitulares: [],
         vocalesSuplentes: [],
-        revisoresDeCuentas: []
+        revisoresDeCuentas: [],
+        created_at: ''
     });
     
     const [loading, setLoading] = useState(false);
@@ -37,7 +43,7 @@ export default function Comision() {
     const getList = async () => {
         try {
             setLoading(true);
-            const res = await getCommittee();
+            const res = await getSelected();
 
             if (res.status !== 200) {
                 const alertMessage = `Error al obtener los datos: ${res.statusText}`;

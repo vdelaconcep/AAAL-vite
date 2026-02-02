@@ -1,13 +1,16 @@
 import pool from "../config/mysql.js";
 import { v4 as uuidv4 } from 'uuid';
 import type { NewComisionData, ComisionRowDB } from "../types/comisionTypes.js";
+import type { ResultSetHeader } from "mysql2";
 
 export default class Comision {
 
     static async new(data: NewComisionData) {
 
+        const connection = await pool.getConnection();
+
         try {
-            await pool.query(`
+            await connection.query(`
                 CREATE TABLE IF NOT EXISTS comision(
                 id CHAR(36) NOT NULL PRIMARY KEY,
                 fromDate DATE NOT NULL,
@@ -21,16 +24,76 @@ export default class Comision {
                 vocalesTitulares JSON NOT NULL,
                 vocalesSuplentes JSON NOT NULL,
                 revisoresDeCuentas JSON NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                selectedToShow BOOLEAN DEFAULT 1
                 )`);
             
             const id = uuidv4();
 
-            await pool.query(`
+            await connection.beginTransaction();
+
+            try {
+                await connection.query(`
+                UPDATE comision SET selectedToShow = 0 WHERE selectedToShow = 1
+                `);
+
+                await connection.query(`
                 INSERT INTO comision (id, fromDate, toDate, presidente, vicepresidente, secretario, prosecretario, tesorero, protesorero, vocalesTitulares, vocalesSuplentes, revisoresDeCuentas)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        id,
+                        data.fromDate,
+                        data.toDate || null,
+                        data.presidente,
+                        data.vicepresidente,
+                        data.secretario,
+                        data.prosecretario,
+                        data.tesorero,
+                        data.protesorero,
+                        JSON.stringify(data.vocalesTitulares),
+                        JSON.stringify(data.vocalesSuplentes),
+                        JSON.stringify(data.revisoresDeCuentas)
+                    ]
+                );
+
+                await connection.commit();
+
+                return {
+                    success: true,
+                    message: 'Comisión registrada con éxito',
+                    id
+                }
+            } catch (err) {
+                await connection.rollback();
+                throw err
+            }
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al registrar comisión: ' + errorMessage)
+        } finally {
+            connection.release();
+        }
+        
+    }
+
+    static async update(id: string, data: NewComisionData) {
+        try {
+            const [updateResult] = await pool.query<ResultSetHeader>(`
+                UPDATE comision
+                SET fromDate = ?,
+                    toDate = ?,
+                    presidente = ?,
+                    vicepresidente = ?,
+                    secretario = ?,
+                    prosecretario = ?,
+                    tesorero = ?,
+                    protesorero = ?,
+                    vocalesTitulares = ?,
+                    vocalesSuplentes = ?,
+                    revisoresDeCuentas = ?
+                WHERE id = ?`,
                 [
-                    id,
                     data.fromDate,
                     data.toDate || null,
                     data.presidente,
@@ -41,30 +104,75 @@ export default class Comision {
                     data.protesorero,
                     JSON.stringify(data.vocalesTitulares),
                     JSON.stringify(data.vocalesSuplentes),
-                    JSON.stringify(data.revisoresDeCuentas)
-                ]
-            )
+                    JSON.stringify(data.revisoresDeCuentas),
+                    id
+                ])
+            
+            if (updateResult.affectedRows === 0) {
+                return {
+                    success: false,
+                    message: 'No se encontró la comisión con el id proporcionado'
+                }
+            }
 
             return {
                 success: true,
-                message: 'Comisión registrada con éxito',
-                id
+                message: 'Datos de comisión actualizados con éxito'
             }
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-            throw new Error('Error al registrar comisión: ' + errorMessage)
+            throw new Error('Error al actualizar comisión: ' + errorMessage)
         }
-        
+    } 
+
+    static async setAsSelected(id: string) {
+        const connection = await pool.getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            try {
+                await connection.query(`
+                UPDATE comision SET selectedToShow = 0 WHERE selectedToShow = 1
+                `)
+
+                const [updateResult] = await connection.query<ResultSetHeader>(`
+                    UPDATE comision SET selectedToShow = 1 WHERE id = ?
+                    `, [id]);
+                
+                if (updateResult.affectedRows === 0) {
+                    await connection.rollback();
+                    return {
+                        success: false,
+                        message: 'No se encontró la comisión con el id proporcionado'
+                    }
+                }
+
+                await connection.commit();
+
+                return {
+                    success: true,
+                    message: 'Comisión seleccionada con éxito'
+                }
+            } catch (err) {
+                await connection.rollback();
+                throw err;
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al seleccionar comisión: ' + errorMessage)
+        } finally {
+            connection.release();
+        }
     }
 
-    static async getAllMembers(from: string) {
+    static async getSelectedRow() {
         try {
             const [rows] = await pool.query<ComisionRowDB[]>(`
-                SELECT toDate, presidente, vicepresidente, secretario, prosecretario, tesorero, protesorero, vocalesTitulares, vocalesSuplentes, revisoresDeCuentas
+                SELECT id, fromDate, toDate, presidente, vicepresidente, secretario, prosecretario, tesorero, protesorero, vocalesTitulares, vocalesSuplentes, revisoresDeCuentas, created_at
                 FROM comision
-                WHERE fromDate = ?`,
-                [from]
+                WHERE selectedToShow = 1`
             );
             
             return rows;

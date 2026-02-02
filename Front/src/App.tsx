@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AlertProvider } from '@/context/alertContext';
+import { AuthProvider } from '@/context/authContext';
 import AlertComponent from '@/components/ui/alertComponent';
 import Layout from '@/components/ui/layout';
 import PrincipalComponent from '@/components/principal/principal';
@@ -21,6 +22,7 @@ export default function App() {
 
   return (
     <>
+      <AuthProvider>
       <AlertProvider>
         <BrowserRouter>
           <Routes>
@@ -44,6 +46,7 @@ export default function App() {
         </BrowserRouter>
         <AlertComponent />
       </AlertProvider>
+      </AuthProvider>
     </>
   )
 }

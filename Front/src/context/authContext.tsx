@@ -9,13 +9,16 @@ interface UserDataType {
 
 interface AuthState {
     isAdminLoggedIn: boolean
-    adminUser: UserDataType | null;
+    adminUser: UserDataType | null
+    showAdminPanel: boolean
 }
 
 interface AuthContextType extends AuthState {
     login: (userData: UserDataType) => void;
     logout: () => void;
     checkAuthStatus: () => void;
+    setShowAdminPanel: (arg: boolean) => void;
+    toggleAdminPanel: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,8 +29,9 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [authState, setAuthState] = useState<AuthState>({
-    isAdminLoggedIn: false,
-    adminUser: null,
+        isAdminLoggedIn: false,
+        adminUser: null,
+        showAdminPanel: false
     });
 
     useEffect(() => {
@@ -42,6 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setAuthState({
                 isAdminLoggedIn: true,
                 adminUser: parsedAuth,
+                showAdminPanel: true
             });
         }
         } catch (error) {
@@ -54,6 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthState({
             isAdminLoggedIn: true,
             adminUser: userData,
+            showAdminPanel: true
         });
     localStorage.setItem('adminAuth', JSON.stringify(userData));
     };
@@ -62,8 +68,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState({
         isAdminLoggedIn: false,
         adminUser: null,
+        showAdminPanel: false
     });
     localStorage.removeItem('adminAuth');
+    };
+
+    const setShowAdminPanel = (show: boolean) => {
+        setAuthState(prev => ({ ...prev, showAdminPanel: show }));
+    };
+
+    const toggleAdminPanel = () => {
+        setAuthState(prev => ({ ...prev, showAdminPanel: !prev.showAdminPanel }));
     };
 
     const value: AuthContextType = {
@@ -71,6 +86,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         checkAuthStatus,
+        setShowAdminPanel,
+        toggleAdminPanel
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

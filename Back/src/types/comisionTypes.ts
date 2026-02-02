@@ -15,19 +15,20 @@ export type NewComisionData = {
 }
 
 export type ComisionRow = {
-    id: string;
-    fromDate: Date;
-    toDate: Date | null;
-    presidente: string;
-    vicepresidente: string;
-    secretario: string;
-    prosecretario: string;
-    tesorero: string;
-    protesorero: string;
-    vocalesTitulares: string;
-    vocalesSuplentes: string;
-    revisoresDeCuentas: string;
-    created_at: Date;
+    id: string,
+    fromDate: Date,
+    toDate: Date | null,
+    presidente: string,
+    vicepresidente: string,
+    secretario: string,
+    prosecretario: string,
+    tesorero: string,
+    protesorero: string,
+    vocalesTitulares: string,
+    vocalesSuplentes: string,
+    revisoresDeCuentas: string,
+    created_at: Date,
+    selectedToShow: boolean
 }
 
 export type ComisionRowDB = ComisionRow & RowDataPacket

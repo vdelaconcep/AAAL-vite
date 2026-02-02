@@ -2,17 +2,12 @@ import Comision from "../models/comisionModel.js";
 import type { Request, Response } from "express";
 import type { NewComisionData } from "../types/comisionTypes.js";
 
-interface GetMembersParam {
-    from: string 
-}
 
-export async function getMembers(req: Request<GetMembersParam> , res: Response) {
-    const { from } = req.params;
-    console.log(from)
+export async function getSelected(req: Request, res: Response) {
 
     try {
-        const members = await Comision.getAllMembers(from);
-        res.status(200).json(members)
+        const result = await Comision.getSelectedRow();
+        res.status(200).json(result)
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
         res.status(500).json({error: errorMessage})
@@ -23,10 +18,64 @@ export async function newComision(req: Request<{}, {}, NewComisionData>, res: Re
     const data = req.body;
 
     try {
-        const newComisionEntry = await Comision.new(data);
-        res.status(200).json(newComisionEntry)
+        const result = await Comision.new(data);
+        res.status(200).json(result)
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
         res.status(500).json({error: errorMessage})
+    }
+}
+
+export async function selectComisionToShow(req: Request<{ selectedId: string }>, res: Response) {
+    const { selectedId } = req.params;
+
+    if (!selectedId || selectedId.trim() === '') {
+        return res.status(400).json({
+            success: false,
+            message: 'Se requiere ingresar el id'
+        })
+    }
+
+    if (selectedId.length > 36) {
+        return res.status(400).json({
+            success: false,
+            message: 'Se requiere ingresar el id'
+        })
+    }
+
+    try {
+        const result = await Comision.setAsSelected(selectedId);
+        res.status(200).json(result)
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        res.status(500).json({ error: errorMessage })
+    }
+
+}
+
+export async function updateComision(req: Request<{ id: string }, {}, NewComisionData>, res: Response) {
+    const { id } = req.params;
+    const data = req.body;
+
+    if (!id || id.trim() === '') {
+        return res.status(400).json({
+            success: false,
+            message: 'Se requiere ingresar el id'
+        })
+    }
+
+    if (id.length > 36) {
+        return res.status(400).json({
+            success: false,
+            message: 'El id ingresado es incorrecto'
+        })
+    }
+
+    try {
+        const result = await Comision.update(id, data);
+        res.status(200).json(result)
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        res.status(500).json({ error: errorMessage })
     }
 }
