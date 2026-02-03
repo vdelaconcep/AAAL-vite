@@ -5,9 +5,9 @@ import AlertComponent from '@/components/ui/alertComponent';
 import Layout from '@/components/ui/layout';
 import PrincipalComponent from '@/components/principal/principal';
 import ContactComponent from '@/components/contact/contactComponent';
+import ComisionComponent from '@/components/comision/comisionComponent';
 /* import QuienesSomos from '@/pages/quienesSomos';
 import Historia from '@/pages/historia';
-import Comision from '@/pages/comision';
 import Comunidad from '@/pages/comunidad';
 import Institucional from '@/pages/institucional';
 import ProximosEventos from '@/pages/proximosEventos';
@@ -28,7 +28,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<PrincipalComponent />} />
-              <Route path='/contacto' element={<ContactComponent />} />
+                <Route path='/contacto' element={<ContactComponent />} />
+                <Route path='/nosotros/comisiondirectiva' element={<ComisionComponent />} />
               {/* <Route path='/nosotros/quienessomos' element={<QuienesSomos />} />
               <Route path='/nosotros/historia' element={<Historia />} />
               <Route path='/nosotros/comisiondirectiva' element={<Comision />} />

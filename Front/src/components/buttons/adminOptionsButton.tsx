@@ -1,4 +1,4 @@
-import { Wrench } from "lucide-react"
+import { Wrench, X } from "lucide-react"
 
 interface AdminOptionsButtonProps {
     showAdminOptions: boolean
@@ -9,11 +9,12 @@ interface AdminOptionsButtonProps {
 export default function AdminOptionsButton({ showAdminOptions, setShowAdminOptions, addClass }: AdminOptionsButtonProps) {
     return (
         <button
-            className={`${addClass} rounded-md bg-gray-900 border-black border-2 p-4`}
+            className={`${addClass} rounded-md text-white bg-gray-700 hover:bg-gray-900 hover:shadow-sm hover:shadow-gray-600 border-black border-2 p-2 cursor-pointer absolute top-5 left-5`}
             type="button"
             onClick={() => setShowAdminOptions(!showAdminOptions)}
         >
-            <Wrench size={20} className="text-white"/>
+            {showAdminOptions ? <X size={28}/> : <Wrench size={28}/>}
+            
         </button>
     )
 }

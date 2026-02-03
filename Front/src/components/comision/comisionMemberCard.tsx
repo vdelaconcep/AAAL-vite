@@ -4,13 +4,10 @@ interface ComisionMemberCardProps {
 }
 
 export default function ComisionMembersCard({ members, position }: ComisionMemberCardProps) {
-    /* const positionToShow = (arg: string) => {
-        if (/[A-Z]/.test(char)) {
-            console.log('Es mayúscula');
-        }
-    } */
+
     const background = position === 'Presidente' ? '#6E1538' :
-        position === 'Vicepresidente' || position === 'Tesorero' || position === 'Revisores de cuentas' ? '#6B9795' : '#A0AB94'
+        position === 'Vicepresidente' || position === 'Tesorero' || position === 'Protesorero'||position === 'Revisores de Cuentas' ? '#6B9795' : '#A0AB94'
+    
     return (
         <article className="bg-gray-300 rounded-lg overflow-hidden shadow-xs shadow-gray-800 font-medium flex-1">
             <p className={`bg-[${background}] text-white text-center text-shadow-xs text-shadow-gray-800`}>{position}</p>

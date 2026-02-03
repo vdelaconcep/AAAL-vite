@@ -2,9 +2,12 @@ import { getSelected } from "@/services/comisionServices";
 import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useAlert } from "@/context/alertContext";
-import CommitteeMembersCard from "@/components/comision/committeeMemberCard";
+import ComisionMemberCard from "@/components/comision/comisionMemberCard";
 import LoadingComponent from "@/components/ui/loadingComponent";
 import axios from 'axios';
+import AdminOptionsButton from "@/components/buttons/adminOptionsButton";
+import ComisionAdminOptionsList from "@/components/comision/comisionAdminOptionsList";
+import { Section } from "lucide-react";
 
 export default function ComisionComponent() {
 
@@ -39,6 +42,7 @@ export default function ComisionComponent() {
     });
     
     const [loading, setLoading] = useState(false);
+    const [showAdminOptions, setShowAdminOptions] = useState(false);
 
     const getList = async () => {
         try {
@@ -69,17 +73,34 @@ export default function ComisionComponent() {
         getList()
     }, []);
     
+    const dateToShow = (date: string) => {
+        return `${date.slice(8,10)}-${date.slice(5,7)}-${date.slice(0,4)}`
+    }
 
     return (
-        <main className="h-full bg-white py-7 md:py-10 flex flex-col items-center px-4">
+        <main className="h-full bg-white py-7 md:py-10 flex flex-col items-center px-4 relative">
+
+            <AdminOptionsButton
+                showAdminOptions={showAdminOptions}
+                setShowAdminOptions={setShowAdminOptions}
+                addClass="z-10"/>
+            
+            {showAdminOptions &&
+                <>
+                <ComisionAdminOptionsList
+                    showAdminOptions={showAdminOptions}
+                    addClass="z-10" />
+                <section className="absolute top-0 left-0 bg-black/40 backdrop-blur-xs w-full h-full z-5"></section>
+                </>}
+
             <div className="text-gray-900 text-center font-bold italic mb-5">
                 <h1 className="text-2xl md:text-3xl mb-2 md:mb-4">Comisión directiva</h1>
-                {(Object.keys(comision).length > 0) && <h3 className="text-s md:text-lg">{`Período ${comision.periodo} - ${comision.periodo + 1}`}</h3>}
+                {(Object.keys(data).length > 0) && <h3 className="text-s md:text-lg">{data.toDate ? '' : 'Desde '}{dateToShow(data.fromDate)}{data.toDate ? ` / ${dateToShow(data.toDate)}` : ''}</h3>}
             </div>
             
             <LoadingComponent isLoading={loading} />
 
-            {(Object.keys(comision).length > 0) ? (
+            {(Object.keys(data).length > 0) ? (
                 
                 <motion.div
                     initial={{ y: 30, opacity: 0 }}
@@ -88,55 +109,47 @@ export default function ComisionComponent() {
                     viewport={{ once: true, amount: 0.2 }}
                     className="flex flex-col w-full md:max-w-[450px] items-center text-[13px] md:text-[16px]">
                     <div className="w-full mb-4">
-                        <CommitteeMembersCard
+                        <ComisionMemberCard
                             position='Presidente'
                             members={[data.presidente]} />
                     </div>
                     <div className="w-full mb-4">
-                        <MiembroComision
-                            fondo='#6B9795' // Celeste
-                            cargo='Vicepresidente'
-                            nombres={[data.vicepresidente]} />
+                        <ComisionMemberCard
+                            position='Vicepresidente'
+                            members={[data.vicepresidente]} />
                     </div>
                     <div className="flex gap-2 mb-4 w-full">
-                        <MiembroComision
-                            fondo='#A0AB94' // Verde
-                            cargo='Secretario'
-                            nombres={[comision.secretario]} />
-                        <MiembroComision
-                            fondo='#A0AB94' // Verde
-                            cargo='Prosecretario'
-                            nombres={[comision.prosecretario]} />
+                        <ComisionMemberCard
+                            position='Secretario'
+                            members={[data.secretario]} />
+                        <ComisionMemberCard
+                            position='Prosecretario'
+                            members={[data.prosecretario]} />
                     </div>
                     <div className="flex gap-2 mb-4 w-full">
-                        <MiembroComision
-                            fondo='#6B9795' // Celeste
-                            cargo='Tesorero'
-                            nombres={[comision.tesorero]} />
-                        <MiembroComision
-                            fondo='#6B9795' // Celeste
-                            cargo='Protesorero'
-                            nombres={[comision.protesorero]} />
+                        <ComisionMemberCard
+                            position='Tesorero'
+                            members={[data.tesorero]} />
+                        <ComisionMemberCard
+                            position='Protesorero'
+                            members={[data.protesorero]} />
                     </div>
                     <div className="flex gap-2 mb-4 w-full">
-                        <MiembroComision
-                            fondo='#A0AB94' // Verde
-                            cargo='Vocales titulares'
-                            nombres={[comision.vocaltitular1, comision.vocaltitular2, comision.vocaltitular3]} />
-                        <MiembroComision
-                            fondo='#A0AB94' // Verde
-                            cargo='Vocales suplentes'
-                            nombres={[comision.vocalsuplente1, comision.vocalsuplente2, comision.vocalsuplente3]} />
+                        <ComisionMemberCard
+                            position='Vocales Titulares'
+                            members={data.vocalesTitulares} />
+                        <ComisionMemberCard
+                            position='Vocales Suplentes'
+                            members={data.vocalesSuplentes} />
                     </div>
                     <div className="flex gap-2 mb-4 w-full">
-                    <MiembroComision
-                        fondo='#6B9795' // Celeste
-                        cargo='Revisores de cuentas'
-                        nombres={[comision.revisordecuentas1, comision.revisordecuentas2, comision.revisordecuentas3]} />
+                        <ComisionMemberCard
+                            position='Revisores de Cuentas'
+                            members={data.revisoresDeCuentas} />
                     </div>
                 </motion.div>
             ) : (
-                !cargando && <p>No hay datos de comisión disponibles</p>
+                !loading && <p>No hay datos de comisión disponibles</p>
             )}
         </main>
     )
