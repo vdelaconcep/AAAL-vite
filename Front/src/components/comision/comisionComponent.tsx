@@ -5,9 +5,12 @@ import { useAlert } from "@/context/alertContext";
 import ComisionMemberCard from "@/components/comision/comisionMemberCard";
 import LoadingComponent from "@/components/ui/loadingComponent";
 import axios from 'axios';
-import AdminOptionsButton from "@/components/buttons/adminOptionsButton";
-import ComisionAdminOptionsList from "@/components/comision/comisionAdminOptionsList";
-import { Section } from "lucide-react";
+import AdminOptionsComponent from "@/components/adminOptions/adminOptionsComponent";
+import AdminOptionsList from "@/components/adminOptions/adminOptionsList";
+import ComisionAdminOptionsList from "@/components/comision/admin/comisionAdminOptionsList";
+import { RefetchProvider } from "@/context/refetchContext";
+import { AdminOptionsProvider } from "@/context/adminOptionsContext";
+
 
 export default function ComisionComponent() {
 
@@ -42,7 +45,6 @@ export default function ComisionComponent() {
     });
     
     const [loading, setLoading] = useState(false);
-    const [showAdminOptions, setShowAdminOptions] = useState(false);
 
     const getList = async () => {
         try {
@@ -79,23 +81,20 @@ export default function ComisionComponent() {
 
     return (
         <main className="h-full bg-white py-7 md:py-10 flex flex-col items-center px-4 relative">
+            <RefetchProvider onRefetch={getList}>
+                <AdminOptionsProvider>
+                    <AdminOptionsComponent>
+                        <AdminOptionsList
+                            title="Comisión Directiva"
+                            list={<ComisionAdminOptionsList />}/>
 
-            <AdminOptionsButton
-                showAdminOptions={showAdminOptions}
-                setShowAdminOptions={setShowAdminOptions}
-                addClass="z-10"/>
-            
-            {showAdminOptions &&
-                <>
-                <ComisionAdminOptionsList
-                    showAdminOptions={showAdminOptions}
-                    addClass="z-10" />
-                <section className="absolute top-0 left-0 bg-black/40 backdrop-blur-xs w-full h-full z-5"></section>
-                </>}
+                        </AdminOptionsComponent>
+                </AdminOptionsProvider>
+            </RefetchProvider>
 
             <div className="text-gray-900 text-center font-bold italic mb-5">
                 <h1 className="text-2xl md:text-3xl mb-2 md:mb-4">Comisión directiva</h1>
-                {(Object.keys(data).length > 0) && <h3 className="text-s md:text-lg">{data.toDate ? '' : 'Desde '}{dateToShow(data.fromDate)}{data.toDate ? ` / ${dateToShow(data.toDate)}` : ''}</h3>}
+                {(Object.keys(data).length > 0) && <h3 className="text-s md:text-lg">{data.toDate ? '' : 'Desde '}{dateToShow(data.fromDate)}{data.toDate ? ` // ${dateToShow(data.toDate)}` : ''}</h3>}
             </div>
             
             <LoadingComponent isLoading={loading} />

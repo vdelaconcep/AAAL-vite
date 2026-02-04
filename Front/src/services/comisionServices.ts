@@ -1,8 +1,8 @@
 import { apiClient } from "@/services/apiClient";
 
-interface NewComisionData {
-    fromDate: Date | string,
-    toDate?: Date | string,
+export type NewComisionData = {
+    fromDate: string,
+    toDate?: string | null,
     presidente: string,
     vicepresidente: string,
     secretario: string,
