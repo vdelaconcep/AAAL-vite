@@ -9,7 +9,6 @@ import AdminOptionsComponent from "@/components/adminOptions/adminOptionsCompone
 import AdminOptionsList from "@/components/adminOptions/adminOptionsList";
 import ComisionAdminOptionsList from "@/components/comision/admin/comisionAdminOptionsList";
 import { RefetchProvider } from "@/context/refetchContext";
-import { AdminOptionsProvider } from "@/context/adminOptionsContext";
 
 
 export default function ComisionComponent() {
@@ -82,14 +81,12 @@ export default function ComisionComponent() {
     return (
         <main className="h-full bg-white py-7 md:py-10 flex flex-col items-center px-4 relative">
             <RefetchProvider onRefetch={getList}>
-                <AdminOptionsProvider>
-                    <AdminOptionsComponent>
-                        <AdminOptionsList
-                            title="Comisión Directiva"
-                            list={<ComisionAdminOptionsList />}/>
+                <AdminOptionsComponent>
+                    <AdminOptionsList
+                        title="Comisión Directiva"
+                        list={<ComisionAdminOptionsList />}/>
 
-                        </AdminOptionsComponent>
-                </AdminOptionsProvider>
+                </AdminOptionsComponent>
             </RefetchProvider>
 
             <div className="text-gray-900 text-center font-bold italic mb-5">

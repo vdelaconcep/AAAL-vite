@@ -10,6 +10,7 @@ export default function AlertComponent() {
 
     return (
         <article
+            role="alertdialog"
             className='fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex items-center justify-center px-2'
             onClick={(e) => e.stopPropagation()}>
             

@@ -13,6 +13,7 @@ import { useRefetch } from '@/context/refetchContext';
 import { useAdminOptions } from '@/context/adminOptionsContext';
 
 interface ComisionNewProps {
+    showForm: 'previous'|'update'|'new' |''
     setShowForm: (form: 'previous'|'update'|'new' |'') => void
 }
 
@@ -44,12 +45,14 @@ type NewComisionData = {
     revisoresDeCuentas: string[];
 }
 
-export default function ComisionNew({setShowForm}: ComisionNewProps) {
+export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
 
     const { showAlert } = useAlert();
     const { refetch } = useRefetch();
     const { setShowList } = useAdminOptions();
     const [sendingNewList, setSendingNewList] = useState(false);
+    const [showDataToSend, setShowDataToSend] = useState(false);
+    const [dataToSend, setDataToSend] = useState<NewComisionData>({} as NewComisionData)
 
     const validationSchema = Yup.object({
         fromDate: Yup
@@ -59,6 +62,8 @@ export default function ComisionNew({setShowForm}: ComisionNewProps) {
         toDate: Yup
             .date()
             .optional()
+            .nullable()
+            .transform((value, originalValue) => {return originalValue === '' ? null : value})
             .min(
             Yup.ref('fromDate'),
             'Debe ser posterior a la fecha de inicio')
@@ -136,19 +141,25 @@ export default function ComisionNew({setShowForm}: ComisionNewProps) {
     return date.toISOString().split('T')[0];
     };
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = (data: FormData) => {
         
-        const dataToSend: NewComisionData = {
+        setDataToSend({
             ...data,
             fromDate: formatDate(data.fromDate),
-            toDate: data.toDate ? formatDate(data.toDate) : null,
+            toDate: (data.toDate && data.toDate.toString() !== '') ? formatDate(data.toDate) : null,
             vocalesTitulares: data.vocalesTitulares.split(',').map(n => n.trim()),
             vocalesSuplentes: data.vocalesSuplentes.split(',').map(n => n.trim()),
             revisoresDeCuentas: data.revisoresDeCuentas.split(',').map(n => n.trim())
-        };
+        });
+
+        setShowDataToSend(true)
+    }
+
+    const sendData = async (data: NewComisionData) => {
+
         try {
             setSendingNewList(true);
-            const res = await newComision(dataToSend);
+            const res = await newComision(data);
         
             if (res.status !== 200) {
                 const alertMessage = `Error al enviar datos: ${res.statusText}`;
@@ -156,25 +167,25 @@ export default function ComisionNew({setShowForm}: ComisionNewProps) {
                 return;
             };
         
-            const alertMessage = 'Nueva comisión ingresada con éxito';
-            showAlert(alertMessage, {
-                addAction: () => {
-                    setShowForm('');
-                    setShowList(false)
-                }
-            });
             reset();
             refetch();
+            setShowDataToSend(false);
+            setShowForm('');
+            setDataToSend({} as NewComisionData);
+            setShowList(false);
+            
+            const alertMessage = 'Nueva comisión ingresada con éxito';
+            showAlert(alertMessage);
             return;
         
         } catch (err) {
             const alertMessage = axios.isAxiosError(err)
-                ? `Error al obtener datos: ${err.response?.data?.error || err.message}`
-                : 'Error al obtener datos: Error desconocido';
+                ? `Error al enviar datos: ${err.response?.data?.error || err.message}`
+                : 'Error al enviar datos: Error desconocido';
             showAlert(alertMessage);
             return;
         } finally {
-            setSendingNewList(false)
+            setSendingNewList(false);
         }
     };
 
@@ -195,152 +206,237 @@ export default function ComisionNew({setShowForm}: ComisionNewProps) {
             </button>
 
             <motion.div
-                className="rounded-md bg-gray-700 shadow-sm shadow-gray-600 border-black border-2 p-4 w-full max-w-[400px] md:max-w-md mx-auto relative my-10 sm:my-4"
+                className="rounded-md shadow-sm shadow-gray-400 border-black border-2 w-full max-w-[400px] md:max-w-md mx-auto relative my-10 sm:my-4"
                 initial={{ y: 30, opacity: 0 }}
                 transition={{ duration: 0.8 }}
                 whileInView={{ y: 0, opacity: 1 }}>
-                <h2 className="text-xl text-center text-white font-bold mb-4">Ingreso de nueva comisión</h2>
-                <form
-                    className='flex flex-col text-black'
-                    onSubmit={handleSubmit(onSubmit)}>
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="fromDate">Fecha de inicio del período:</label>
-                        <input
-                            {...register("fromDate")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.fromDate ? 'border-red-600' : ''}`}
-                            type="date" />
-                        {errors.fromDate && <InputError errorMessage={errors.fromDate.message || ''} />}
-                    </article>
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="toDate">Fecha de finalización del período <span className='font-light'>(opcional)</span>:</label>
-                        <input
-                            {...register("toDate")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.toDate ? 'border-red-600' : ''}`}
-                            type="date" />
-                        {errors.toDate && <InputError errorMessage={errors.toDate.message || ''} />}
-                    </article>
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="presidente">Presidente:</label>
-                        <input
-                            {...register("presidente")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.presidente ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.presidente && <InputError errorMessage={errors.presidente.message || ''} />}
-                    </article>
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="vicepresidente">Vicepresidente:</label>
-                        <input
-                            {...register("vicepresidente")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.vicepresidente ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.vicepresidente && <InputError errorMessage={errors.vicepresidente.message || ''} />}
-                    </article>
+                <h2 className="bg-black text-xl text-center text-white font-bold p-4 py-6">Ingreso de nueva comisión</h2>
+                {(showDataToSend && Object.keys(dataToSend).length !== 0 ) ?
+                    <div className='flex flex-col text-black p-4 bg-gray-50 rounded-b-md'>
+                        <h3 className='mb-3 text-center font-semibold'>Se enviarán los siguientes datos:</h3>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="secretario">Secretario:</label>
-                        <input
-                            {...register("secretario")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.secretario ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.secretario && <InputError errorMessage={errors.secretario.message || ''} />}
-                    </article>
+                        <ul>
+                            <li className='mb-1.5'>
+                                Fecha de inicio:
+                                <span className='font-bold'> {dataToSend['fromDate']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Fecha de finalización:
+                                <span className='font-bold'> {dataToSend['toDate']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Presidente:
+                                <span className='font-bold'> {dataToSend['presidente']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Vicepresidente:
+                                <span className='font-bold'> {dataToSend['vicepresidente']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Secretario:
+                                <span className='font-bold'> {dataToSend['secretario']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Prosecretario:
+                                <span className='font-bold'> {dataToSend['prosecretario']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Tesorero:
+                                <span className='font-bold'> {dataToSend['tesorero']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Protesorero:
+                                <span className='font-bold'> {dataToSend['protesorero']}</span>
+                            </li>
+                            <li className='mb-1.5'>
+                                Vocales titulares:
+                                <ul className='font-bold pl-4'>
+                                    {dataToSend['vocalesTitulares'].map(vocal =>
+                                        (<li key={vocal}>{vocal}</li>))}
+                                </ul>
+                            </li>
+                            <li className='mb-1.5'>
+                                Vocales suplentes:
+                                <ul className='font-bold pl-4'>
+                                    {dataToSend['vocalesSuplentes'].map(vocal =>
+                                        (<li key={vocal}>{vocal}</li>))}
+                                </ul>
+                            </li>
+                            <li className='mb-1.5'>
+                                Revisores de cuentas:
+                                <ul className='font-bold pl-4'>
+                                    {dataToSend['revisoresDeCuentas'].map(revisor =>
+                                        (<li key={revisor}>{revisor}</li>))}
+                                </ul>
+                            </li>
+                        </ul>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="prosecretario">Prosecretario:</label>
-                        <input
-                            {...register("prosecretario")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.prosecretario ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.prosecretario && <InputError errorMessage={errors.prosecretario.message || ''} />}
-                    </article>
+                        <article className='flex justify-center mt-6 md:mt-8 gap-2'>
+                            <MainButton
+                                type='button'
+                                text='Atrás'
+                                addClass='w-full rounded-md'
+                                action={() => setShowDataToSend(false)}
+                                secondary={true} />
+                            <MainButton
+                                type='button'
+                                text={sendingNewList ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Confirmar'}
+                                addClass='w-full rounded-md'
+                                disabled={sendingNewList ? true : false}
+                                action={() => sendData(dataToSend)}/>
+                        </article>
+                    </div> :
+                    <form
+                        className='flex flex-col text-black p-4 bg-gray-50 rounded-b-md'
+                        onSubmit={handleSubmit(onSubmit)}>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="from-date">Fecha de inicio del período</label>
+                            <input
+                                {...register("fromDate")}
+                                id='from-date'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.fromDate ? 'border-red-600' : ''}`}
+                                type="date" />
+                            {errors.fromDate && <InputError errorMessage={errors.fromDate.message || ''} />}
+                        </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="to-date">Fecha de finalización del período <span className='font-light'>(opcional)</span></label>
+                            <input
+                                {...register("toDate")}
+                                id='to-date'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.toDate ? 'border-red-600' : ''}`}
+                                type="date" />
+                            {errors.toDate && <InputError errorMessage={errors.toDate.message || ''} />}
+                        </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Presidente">Presidente</label>
+                            <input
+                                {...register("presidente")}
+                                id='Presidente'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.presidente ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.presidente && <InputError errorMessage={errors.presidente.message || ''} />}
+                        </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Vicepresidente">Vicepresidente</label>
+                            <input
+                                {...register("vicepresidente")}
+                                id='Vicepresidente'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.vicepresidente ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.vicepresidente && <InputError errorMessage={errors.vicepresidente.message || ''} />}
+                        </article>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="tesorero">Tesorero:</label>
-                        <input
-                            {...register("tesorero")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.tesorero ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.tesorero && <InputError errorMessage={errors.tesorero.message || ''} />}
-                    </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Secretario">Secretario</label>
+                            <input
+                                {...register("secretario")}
+                                id='Secretario'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.secretario ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.secretario && <InputError errorMessage={errors.secretario.message || ''} />}
+                        </article>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="protesorero">Protesorero:</label>
-                        <input
-                            {...register("protesorero")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.protesorero ? 'border-red-600' : ''}`}
-                            type="text" />
-                        {errors.protesorero && <InputError errorMessage={errors.protesorero.message || ''} />}
-                    </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Prosecretario">Prosecretario</label>
+                            <input
+                                {...register("prosecretario")}
+                                id='Prosecretario'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.prosecretario ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.prosecretario && <InputError errorMessage={errors.prosecretario.message || ''} />}
+                        </article>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="vocalesTitulares">Vocales Titulares <span className='font-light'>(nombres separados por comas)</span>:</label>
-                        <input
-                            {...register("vocalesTitulares")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.vocalesTitulares ? 'border-red-600' : ''}`}
-                            type="text"
-                            placeholder='ej: Juan Pérez, Estela González, José Sánchez'/>
-                        {errors.vocalesTitulares && <InputError errorMessage={errors.vocalesTitulares.message || ''} />}
-                    </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Tesorero">Tesorero</label>
+                            <input
+                                {...register("tesorero")}
+                                id='Tesorero'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.tesorero ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.tesorero && <InputError errorMessage={errors.tesorero.message || ''} />}
+                        </article>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="vocalesSuplentes">Vocales Suplentes (nombres separados por comas):</label>
-                        <input
-                            {...register("vocalesSuplentes")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.vocalesSuplentes ? 'border-red-600' : ''}`}
-                            type="text"
-                            placeholder='ej: Juan Pérez, Estela González, José Sánchez'/>
-                        {errors.vocalesSuplentes && <InputError errorMessage={errors.vocalesSuplentes.message || ''} />}
-                    </article>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="Protesorero">Protesorero</label>
+                            <input
+                                {...register("protesorero")}
+                                id='Protesorero'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.protesorero ? 'border-red-600' : ''}`}
+                                type="text" />
+                            {errors.protesorero && <InputError errorMessage={errors.protesorero.message || ''} />}
+                        </article>
 
-                    <article className="flex flex-col mb-3">
-                        <label
-                            className="font-medium text-start text-white"
-                            htmlFor="revisoresDeCuentas">Revisores de Cuentas (nombres separados por comas):</label>
-                        <input
-                            {...register("revisoresDeCuentas")}
-                            className={`bg-gray-500 text-white focus:bg-gray-300 focus:text-black border border-black rounded-md px-2 py-1 ${errors.revisoresDeCuentas ? 'border-red-600' : ''}`}
-                            type="text"
-                            placeholder='ej: Juan Pérez, Estela González, José Sánchez'/>
-                        {errors.revisoresDeCuentas && <InputError errorMessage={errors.revisoresDeCuentas.message || ''} />}
-                    </article>
-                    <article className='flex justify-center mt-6 md:mt-8 gap-2'>
-                        <MainButton
-                            type='button'
-                            text='Cancelar'
-                            addClass='w-full rounded-md'
-                            action={() => {
-                                setShowForm('');
-                                reset();
-                                setShowList(false)
-                            }}
-                            secondary={true} />
-                        <MainButton
-                            type='submit'
-                            text={sendingNewList ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Enviar'}
-                            addClass='w-full rounded-md'
-                            disabled={sendingNewList ? true : false}/>
-                    </article>
-                </form>
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="vocales-titulares">Vocales Titulares <span className='font-light'>(nombres separados por comas)</span></label>
+                            <input
+                                {...register("vocalesTitulares")}
+                                id='vocales-titulares'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.vocalesTitulares ? 'border-red-600' : ''}`}
+                                type="text"
+                                placeholder='ej: Juan Pérez, Estela González, José Sánchez' />
+                            {errors.vocalesTitulares && <InputError errorMessage={errors.vocalesTitulares.message || ''} />}
+                        </article>
+
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="vocales-suplentes">Vocales Suplentes <span className='font-light'>(nombres separados por comas)</span></label>
+                            <input
+                                {...register("vocalesSuplentes")}
+                                id='vocales-suplentes'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.vocalesSuplentes ? 'border-red-600' : ''}`}
+                                type="text"
+                                placeholder='ej: Juan Pérez, Estela González, José Sánchez' />
+                            {errors.vocalesSuplentes && <InputError errorMessage={errors.vocalesSuplentes.message || ''} />}
+                        </article>
+
+                        <article className="flex flex-col mb-3">
+                            <label
+                                className="font-medium text-start"
+                                htmlFor="revisores-de-cuentas">Revisores de Cuentas <span className='font-light'>(nombres separados por comas)</span></label>
+                            <input
+                                {...register("revisoresDeCuentas")}
+                                id='revisores-de-cuentas'
+                                className={`bg-gray-200 focus:bg-gray-300 border border-black rounded-md px-2 py-1 ${errors.revisoresDeCuentas ? 'border-red-600' : ''}`}
+                                type="text"
+                                placeholder='ej: Juan Pérez, Estela González, José Sánchez' />
+                            {errors.revisoresDeCuentas && <InputError errorMessage={errors.revisoresDeCuentas.message || ''} />}
+                        </article>
+                        <article className='flex justify-center mt-6 md:mt-8 gap-2'>
+                            <MainButton
+                                type='button'
+                                text='Cancelar'
+                                addClass='w-full rounded-md'
+                                action={() => {
+                                    setShowForm('');
+                                    reset();
+                                    setShowList(false)
+                                }}
+                                secondary={true} />
+                            <MainButton
+                                type='submit'
+                                text='Enviar'
+                                addClass='w-full rounded-md' />
+                        </article>
+                    </form>}
             </motion.div>
 
         </section>

@@ -7,14 +7,17 @@ export default forwardRef<HTMLButtonElement | null, {}>(function AdminOptionsBut
     const { showList, toggleList } = useAdminOptions();
 
     return (
-        <button
+        <div className={`rounded-lg bg-black p-[2px] hover:shadow-sm hover:shadow-gray-600 cursor-pointer absolute top-4 left-4 z-7`}>
+            <button
             ref={ref}
-            className={`rounded-md text-white bg-gray-700 hover:bg-gray-900 hover:shadow-sm hover:shadow-gray-600 border-black border-2 p-2 cursor-pointer absolute top-5 left-4 z-7`}
+            className={`rounded-md text-white bg-black hover:bg-gray-700 border-white border-2 p-1.5 cursor-pointer`}
             type="button"
             onClick={toggleList}
         >
             {showList ? <X size={28}/> : <Wrench size={28}/>}
             
-        </button>
+            </button>
+        </div>
+        
     )
 })

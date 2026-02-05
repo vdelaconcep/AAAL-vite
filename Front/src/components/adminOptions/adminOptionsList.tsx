@@ -6,22 +6,22 @@ interface AdminOptionsListProps {
     addClass?: string
 }
 
-export default function AdminOptionsList({ title, list, addClass } : AdminOptionsListProps) {
+export default function AdminOptionsList({ title, list, addClass }: AdminOptionsListProps) {
     return (
         <motion.article
-            className={`${addClass} rounded-md bg-gray-700 shadow-sm shadow-gray-600 border-black border-2 cursor-pointer absolute top-5 left-19 overflow-hidden text-white text-lg origin-top z-8`}
+            className={`${addClass} rounded-lg bg-black p-[2px] shadow-sm shadow-gray-600 absolute top-4 left-17 overflow-hidden text-white text-lg origin-top z-8`}
             initial={{ scaleY: 0, opacity: 0 }}
             animate={{ scaleY: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}>
-            
-            <div className="p-2 font-semibold">
+            <div className={`rounded-[6px] bg-black border-2 border-white`}>
+            <div className="p-2 px-4 font-semibold">
                 {title}
             </div>
 
             <hr className="text-gray-400" />
             
             {list}
-
+            </div>
         </motion.article>
         
     )

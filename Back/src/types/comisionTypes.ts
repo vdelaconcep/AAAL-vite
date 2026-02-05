@@ -2,7 +2,7 @@ import { RowDataPacket } from 'mysql2';
 
 export type NewComisionData = {
     fromDate: Date | string,
-    toDate?: Date | string,
+    toDate?: Date | string | null,
     presidente: string,
     vicepresidente: string,
     secretario: string,

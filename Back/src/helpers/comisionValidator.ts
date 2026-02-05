@@ -62,5 +62,5 @@ export const comisionValidator = [
         .withMessage('El nombre de los revisores de cuentas debe tener entre 3 y 50 caracteres'),
     
     check('fromDate').isDate(),
-    check('toDate').optional().isDate(),
+    check('toDate').optional({ nullable: true }).isDate(),
 ];
