@@ -240,7 +240,7 @@ export default class Comision {
             const [rows] = await pool.query<ComisionRowDB[]>(`
                 SELECT id, fromDate, toDate, presidente, vicepresidente, secretario, prosecretario, tesorero, protesorero, vocalesTitulares, vocalesSuplentes, revisoresDeCuentas, created_at, selectedToShow
                 FROM comision
-                ORDER BY created_at`
+                ORDER BY created_at DESC`
             );
 
             return rows;
