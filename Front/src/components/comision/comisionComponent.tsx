@@ -5,9 +5,9 @@ import { useAlert } from "@/context/alertContext";
 import ComisionMemberCard from "@/components/comision/comisionMemberCard";
 import LoadingComponent from "@/components/ui/loadingComponent";
 import axios from 'axios';
-import AdminOptionsComponent from "@/components/adminOptions/adminOptionsComponent";
-import AdminOptionsList from "@/components/adminOptions/adminOptionsList";
-import ComisionAdminOptionsList from "@/components/comision/admin/comisionAdminOptionsList";
+import AdminOptionsComponent from "@/components/admin/adminOptionsComponent";
+import AdminOptionsList from "@/components/admin/adminOptionsList";
+import ComisionAdminOptionsList from "@/components/comision/adminOptions/comisionAdminOptionsList";
 import { RefetchProvider } from "@/context/refetchContext";
 
 
@@ -51,7 +51,7 @@ export default function ComisionComponent() {
             const res = await getSelected();
 
             if (res.status !== 200) {
-                const alertMessage = `Error al obtener los datos: ${res.statusText}`;
+                const alertMessage = `Error al obtener datos: ${res.statusText}`;
                 showAlert(alertMessage);
                 return;
             }
@@ -84,7 +84,8 @@ export default function ComisionComponent() {
                 <AdminOptionsComponent>
                     <AdminOptionsList
                         title="Comisión Directiva"
-                        list={<ComisionAdminOptionsList />}/>
+                        list={<ComisionAdminOptionsList
+                        data={data}/>} />
 
                 </AdminOptionsComponent>
             </RefetchProvider>

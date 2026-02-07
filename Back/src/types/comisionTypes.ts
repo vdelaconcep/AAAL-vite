@@ -32,3 +32,15 @@ export type ComisionRow = {
 }
 
 export type ComisionRowDB = ComisionRow & RowDataPacket
+
+interface ExisteResultType {
+    existe: number
+}
+
+export type ExisteResultDB = ExisteResultType & RowDataPacket
+
+interface IdResultType {
+    id: string
+}
+
+export type IdResultDB = IdResultType & RowDataPacket

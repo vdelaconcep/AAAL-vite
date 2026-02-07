@@ -53,26 +53,33 @@ export async function selectComisionToShow(req: Request<{ selectedId: string }>,
 
 }
 
-export async function updateComision(req: Request<{ id: string }, {}, NewComisionData>, res: Response) {
-    const { id } = req.params;
+export async function updateComision(req: Request<{}, {}, NewComisionData>, res: Response) {
     const data = req.body;
 
-    if (!id || id.trim() === '') {
-        return res.status(400).json({
-            success: false,
-            message: 'Se requiere ingresar el id'
-        })
+    try {
+        const result = await Comision.updateSelected(data);
+        res.status(200).json(result)
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        res.status(500).json({ error: errorMessage })
     }
+}
 
-    if (id.length > 36) {
-        return res.status(400).json({
-            success: false,
-            message: 'El id ingresado es incorrecto'
-        })
-    }
+export async function deleteComision(req: Request<{id: string}>, res: Response) {
+    const { id } = req.params;
 
     try {
-        const result = await Comision.update(id, data);
+        const result = await Comision.delete(id);
+        res.status(200).json(result)
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+        res.status(500).json({ error: errorMessage })
+    }
+}
+
+export async function getAll(req: Request, res: Response) {
+    try {
+        const result = await Comision.getAllRows();
         res.status(200).json(result)
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';

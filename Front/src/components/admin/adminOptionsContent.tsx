@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react"
-import AdminOptionsButton from "@/components/adminOptions/adminOptionsButton";
+import AdminOptionsButton from "@/components/admin/adminOptionsButton";
 import { useAdminOptions } from "@/context/adminOptionsContext";
 
 interface AdminOptionsContentProps {

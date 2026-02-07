@@ -39,7 +39,7 @@ export default function NavigationComponent() {
     return (
         <nav
             ref={navRef}
-            className="bg-[#78a7a5] border-b-[2px] border-b-[#5b807e] md:text-[#d3fffd] text-lg md:text-xl relative md:pr-6"
+            className="bg-cyan-600 border-b-[2px] border-b-cyan-800 md:text-[#d3fffd] text-lg md:text-xl relative md:pr-6"
         >
             <div className="flex justify-end md:hidden py-1 pr-4">
                 <MenuButton
@@ -91,12 +91,12 @@ export default function NavigationComponent() {
                         {section.subSections && (
                             <>
                                 <ul
-                                    className={`hidden md:block md:absolute md:bg-gray-300 md:text-lg md:rounded md:shadow-xl md:shadow-black md:w-40 md:transform md:transition-all md:duration-300 md:origin-top md:z-70 ${displayList === section.sectionTitle ? "md:opacity-100 md:scale-y-100" : "md:opacity-0 md:scale-y-0 md:pointer-events-none"}`}
+                                    className={`overflow-hidden hidden md:block md:absolute md:bg-gray-300 md:text-lg md:rounded md:shadow-xl md:shadow-black md:w-40 md:transform md:transition-all md:duration-300 md:origin-top md:z-70 ${displayList === section.sectionTitle ? "md:opacity-100 md:scale-y-100" : "md:opacity-0 md:scale-y-0 md:pointer-events-none"} border border-gray-800`}
                                 >
                                     {section.subSections.map((i, index) => (
                                         <li
                                             key={`${section.sectionTitle}-${index}`}
-                                            className="p-2 pl-3 text-gray-900 hover:bg-[#6E1538] hover:text-white rounded"
+                                            className="p-2 pl-3 text-gray-900 hover:bg-[#6E1538] hover:text-white"
                                             onClick={() => setDisplayList(null)}>
                                             <Link to={`/${clearString(section.sectionTitle)}/${clearString(i)}`}>{i}</Link>
                                         </li>

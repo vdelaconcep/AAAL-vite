@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainButton from '@/components/buttons/mainButton';
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -6,16 +6,12 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import InputError from '@/components/ui/inputError';
 import { useAlert } from '@/context/alertContext';
-import { X } from 'lucide-react';
-import { newComision } from '@/services/comisionServices';
+import { newComision, updateComision } from '@/services/comisionServices';
 import axios from 'axios';
 import { useRefetch } from '@/context/refetchContext';
 import { useAdminOptions } from '@/context/adminOptionsContext';
-
-interface ComisionNewProps {
-    showForm: 'previous'|'update'|'new' |''
-    setShowForm: (form: 'previous'|'update'|'new' |'') => void
-}
+import type { ComisionData } from '@/types/comisionDataTypes';
+import CloseButton from '@/components/buttons/closeButton';
 
 type FormData = {
     fromDate: Date;
@@ -31,28 +27,20 @@ type FormData = {
     revisoresDeCuentas: string;
 }
 
-type NewComisionData = {
-    fromDate: string;
-    toDate?: string | null;
-    presidente: string;
-    vicepresidente: string;
-    secretario: string;
-    prosecretario: string;
-    tesorero: string;
-    protesorero: string;
-    vocalesTitulares: string[];
-    vocalesSuplentes: string[];
-    revisoresDeCuentas: string[];
+interface ComisionFormProps {
+    updateData?: ComisionData & {created_at: string} | null
+    showForm: 'previous'|'update'|'new' |''
+    setShowForm: (form: 'previous'|'update'|'new' |'') => void
 }
 
-export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
+export default function ComisionForm({ updateData, showForm, setShowForm }: ComisionFormProps) {
 
     const { showAlert } = useAlert();
     const { refetch } = useRefetch();
     const { setShowList } = useAdminOptions();
-    const [sendingNewList, setSendingNewList] = useState(false);
+    const [sendingList, setSendingList] = useState(false);
     const [showDataToSend, setShowDataToSend] = useState(false);
-    const [dataToSend, setDataToSend] = useState<NewComisionData>({} as NewComisionData)
+    const [dataToSend, setDataToSend] = useState<ComisionData>({} as ComisionData)
 
     const validationSchema = Yup.object({
         fromDate: Yup
@@ -155,11 +143,11 @@ export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
         setShowDataToSend(true)
     }
 
-    const sendData = async (data: NewComisionData) => {
+    const sendData = async (data: ComisionData) => {
 
         try {
-            setSendingNewList(true);
-            const res = await newComision(data);
+            setSendingList(true);
+            const res = await (showForm === 'new' ?newComision(data) : updateComision(data));
         
             if (res.status !== 200) {
                 const alertMessage = `Error al enviar datos: ${res.statusText}`;
@@ -171,10 +159,10 @@ export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
             refetch();
             setShowDataToSend(false);
             setShowForm('');
-            setDataToSend({} as NewComisionData);
+            setDataToSend({} as ComisionData);
             setShowList(false);
             
-            const alertMessage = 'Nueva comisión ingresada con éxito';
+            const alertMessage = showForm === 'new' ? 'Nueva comisión ingresada con éxito': 'Comisión modificada con éxito';
             showAlert(alertMessage);
             return;
         
@@ -185,32 +173,46 @@ export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
             showAlert(alertMessage);
             return;
         } finally {
-            setSendingNewList(false);
+            setSendingList(false);
         }
     };
+
+    useEffect(() => {
+        if (updateData && showForm === 'update') {
+            const defaultFormValues = {
+                fromDate: new Date(updateData.fromDate).toISOString().split('T')[0] as unknown as Date,
+                toDate: updateData.toDate ? new Date(updateData.toDate).toISOString().split('T')[0] as unknown as Date : null,
+                presidente: updateData.presidente,
+                vicepresidente: updateData.vicepresidente,
+                secretario: updateData.secretario,
+                prosecretario: updateData.prosecretario,
+                tesorero: updateData.tesorero,
+                protesorero: updateData.protesorero,
+                vocalesTitulares: updateData.vocalesTitulares.join(', '),
+                vocalesSuplentes: updateData.vocalesSuplentes.join(', '),
+                revisoresDeCuentas: updateData.revisoresDeCuentas.join(', ')
+            }
+
+            reset(defaultFormValues);
+        }
+        }, [updateData, reset]);
 
     return (
         <section
             className='fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex flex-col justify-start overflow-y-auto scrollbar-hide px-4'>
             
-            <button
-                onClick={() => {
+            <CloseButton
+                action={() => {
                     setShowForm('')
                     setShowList(false)
-                }}
-                title="Cerrar"
-                className="absolute top-2 md:top-4 right-2 md:right-4 text-gray-300 hover:text-white transition-colors z-20 bg-black bg-opacity-50 rounded-full p-2 cursor-pointer"
-                aria-label="Cerrar"
-            >
-                <X size={32} />
-            </button>
+                }}/>
 
             <motion.div
                 className="rounded-md shadow-sm shadow-gray-400 border-black border-2 w-full max-w-[400px] md:max-w-md mx-auto relative my-10 sm:my-4"
                 initial={{ y: 30, opacity: 0 }}
                 transition={{ duration: 0.8 }}
                 whileInView={{ y: 0, opacity: 1 }}>
-                <h2 className="bg-black text-xl text-center text-white font-bold p-4 py-6">Ingreso de nueva comisión</h2>
+                <h2 className="bg-black text-xl text-center text-white font-bold p-4 py-6">{showForm === 'new' ? 'Ingreso de nueva comisión' : 'Modificar comisión'}</h2>
                 {(showDataToSend && Object.keys(dataToSend).length !== 0 ) ?
                     <div className='flex flex-col text-black p-4 bg-gray-50 rounded-b-md'>
                         <h3 className='mb-3 text-center font-semibold'>Se enviarán los siguientes datos:</h3>
@@ -280,9 +282,9 @@ export default function ComisionNew({showForm, setShowForm}: ComisionNewProps) {
                                 secondary={true} />
                             <MainButton
                                 type='button'
-                                text={sendingNewList ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Confirmar'}
+                                text={sendingList ? <><span>Enviando </span><i className="fa-solid fa-spinner fa-spin"></i></> : 'Confirmar'}
                                 addClass='w-full rounded-md'
-                                disabled={sendingNewList ? true : false}
+                                disabled={sendingList ? true : false}
                                 action={() => sendData(dataToSend)}/>
                         </article>
                     </div> :
