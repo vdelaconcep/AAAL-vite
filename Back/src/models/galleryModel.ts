@@ -1,13 +1,7 @@
-import pool from '../config/mysql.js';
+import pool from '../config/mysql.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
-
-type NewEventData = {
-    eventName: string,
-    date: string,
-    photos: { url: string, publicId: string }[],
-    description: string
-}
+import type { NewEventData, GetEventByIdResult, Photo, Event } from '../types/galleryTypes.js';
 
 type PreviousQuery = {
     maxOrder: number
@@ -25,13 +19,12 @@ type PublicIdQuery = {
     cloudinary_public_id: string
 } & RowDataPacket
 
-class PhotoGallery {
+export default class Gallery {
     static async newEvent(data: NewEventData) {
         
         const MAX_PHOTOS = 20;
         const photoArray = data.photos;
 
-        // Comprobaciones
         if (!photoArray || photoArray.length === 0) {
             throw new Error('Error: no se enviaron fotos');
         }
@@ -58,7 +51,7 @@ class PhotoGallery {
             console.log("Tabla 'eventGallery' creada ✅");
 
             const photoCreationQuery = `
-            CREATE TABLE photoGallery (
+            CREATE TABLE IF NOT EXISTS photoGallery (
                 id CHAR(36) NOT NULL PRIMARY KEY,
                 event_id CHAR(36) NOT NULL,
                 url VARCHAR(1000) NOT NULL,
@@ -77,7 +70,7 @@ class PhotoGallery {
             const eventId = uuidv4();
 
             const insertQueryEvent = `
-                INSERT INTO eventosGaleria (id, event_name, date, description)
+                INSERT INTO eventGallery (id, event_name, date, description)
                 VALUES(?, ?, ?, ?)
             `;
 
@@ -255,6 +248,10 @@ class PhotoGallery {
             throw new Error('Error: no se envió la descripción');
         }
 
+        if (description.length > 140) {
+            throw new Error('Error: La descripción no debe exceder los 140 caracteres');
+        }
+
         try {
             const query = 'UPDATE photoGallery SET description = ? WHERE id = ?';
 
@@ -318,24 +315,24 @@ class PhotoGallery {
         try {
             let query = `
             SELECT 
-                f.id,
-                f.url,
-                f.description,
-                f.order,
-                f.created_at,
-                f.modified_at,
-                f.event_id,
+                p.id,
+                p.url,
+                p.description,
+                p.order,
+                p.created_at,
+                p.modified_at,
+                p.event_id,
                 e.event_name as event,
                 e.date as date
-            FROM photoGallery f
-            INNER JOIN eventGallery e ON f.event_id = e.id
+            FROM photoGallery p
+            INNER JOIN eventGallery e ON p.event_id = e.id
         `;
 
             let params = [];
             let conditions = [];
 
             if (photoId) {
-                conditions.push('f.id = ?');
+                conditions.push('p.id = ?');
                 params.push(photoId);
             }
 
@@ -355,8 +352,8 @@ class PhotoGallery {
             if (!photoId) {
                 let totalQuery = `
                     SELECT COUNT(*) as total 
-                    FROM photoGallery f
-                    INNER JOIN eventGallery e ON f.event_id = e.id
+                    FROM photoGallery p
+                    INNER JOIN eventGallery e ON p.event_id = e.id
                 `;
 
                 let totalParams = [];
@@ -432,22 +429,22 @@ class PhotoGallery {
         }
     }
 
-    static async getEvent(eventId: string) {
+    static async getEventById(eventId: string): Promise<GetEventByIdResult> {
 
         if (!eventId) {
             throw new Error('Se debe indicar el id del evento');
         }
 
         try {
-            const [eventResult] = await pool.query<ResultSetHeader[]>(
-                'SELECT id, name, date, description, created_at, modified_at FROM eventGallery WHERE id=?',
+            const [eventResult] = await pool.query<RowDataPacket[]>(
+                'SELECT id, event_name, date, description, created_at, modified_at FROM eventGallery WHERE id=?',
                 [eventId]
             );
 
             if (eventResult.length === 0) {
                 return {
                     success: false,
-
+                    message: 'No se encontró un evento con el id ingresado'
                 }
             }
             
@@ -456,25 +453,28 @@ class PhotoGallery {
                 [eventId]
             );
 
-            
-
             return {
                 success: true,
-                ...evento[0],
-                fotos: rows
+                ...(eventResult[0] as Event),
+                photos: photosResult as Photo[]
             }
-        } catch (error) {
-            throw new Error('Error al obtener información del evento desde la base de datos: ' + error.message)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al obtener evento: ' + errorMessage);
         }
     }
 
-    static async getEventos(fechaDesde = null, fechaHasta = null, page = 1, limit = 11) {
+    static async getEventsByDate(
+        page: number = 1,
+        limit: number = 11,
+        from?: string | null,
+        to?: string | null) {
 
         if (!page || !limit || page < 1 || limit < 1) {
             throw new Error('Se requieren parámetros válidos de paginación (page y limit)');
         }
 
-        if ((fechaDesde && !fechaHasta) || (!fechaDesde && fechaHasta)) {
+        if ((from && !to) || (!from && to)) {
             throw new Error('Debe ingresar ambas fechas (desde y hasta) para filtrar por rango');
         }
 
@@ -482,37 +482,35 @@ class PhotoGallery {
             let query = `
             SELECT 
                 e.id,
-                e.nombre,
-                e.fecha,
-                e.descripcion,
-                e.created_by,
+                e.event_name,
+                e.date,
+                e.description,
                 e.created_at,
-                e.modified_by,
                 e.modified_at,
-                f.url as foto_url,
-                COALESCE(foto_count.total_fotos, 0) as total_fotos
-            FROM eventosGaleria e
-            LEFT JOIN fotosGaleria f ON e.id = f.id_evento
-                AND f.orden = (
-                    SELECT MIN(orden)
-                    FROM fotosGaleria
-                    WHERE id_evento = e.id
+                p.url as photo_url,
+                COALESCE(photo_count.total_photos, 0) as total_photos
+            FROM eventGallery e
+            LEFT JOIN photoGallery p ON e.id = p.event_id
+                AND p.order = (
+                    SELECT MIN(order)
+                    FROM photoGallery
+                    WHERE event_id = e.id
                 )
             LEFT JOIN (
-                SELECT id_evento, COUNT(*) as total_fotos
-                FROM fotosGaleria
-                GROUP BY id_evento
-            ) foto_count ON e.id = foto_count.id_evento
+                SELECT event_id, COUNT(*) as total_photos
+                FROM photoGallery
+                GROUP BY event_id
+            ) photo_count ON e.id = photo_count.event_id
         `;
 
             let params = [];
             let conditions = '';
 
-            if (fechaDesde && fechaHasta) {
-                if (!this.fechasValidas(fechaDesde, fechaHasta)) throw new Error('Deben ingresarse fechas válidas');
+            if (from && to) {
+                if (!this.isValidDate(from, to)) throw new Error('Deben ingresarse fechas válidas');
 
-                conditions += 'e.fecha >= ? AND e.fecha <= ?';
-                params.push(fechaDesde, fechaHasta);
+                conditions += 'e.date >= ? AND e.date <= ?';
+                params.push(from, to);
 
                 if (conditions.length > 0) query += ' WHERE ' + conditions;
             }
@@ -520,32 +518,30 @@ class PhotoGallery {
             const offset = (page - 1) * limit;
             params.push(limit, offset);
 
-            query += ' ORDER BY e.fecha DESC LIMIT ? OFFSET ?';
+            query += ' ORDER BY e.date DESC LIMIT ? OFFSET ?';
 
-            // Armado de query para datos de paginación
+            let totalQuery = 'SELECT COUNT(*) as total FROM eventGallery e';
 
-            let queryTotal = 'SELECT COUNT(*) as total FROM eventosGaleria e';
-
-            let paramsTotal = [];
+            let totalParams = [];
 
             if (conditions.length > 0) {
-                queryTotal += ' WHERE ' + conditions;
+                totalQuery += ' WHERE ' + conditions;
 
-                if (fechaDesde && fechaHasta) {
-                    paramsTotal.push(fechaDesde, fechaHasta);
+                if (from && to) {
+                    totalParams.push(from, to);
                 }
             }
 
-            const [totalResult] = await pool.query(queryTotal, paramsTotal);
+            const [totalResult] = await pool.query<TotalQuery[]>(totalQuery, totalParams);
             const total = totalResult[0].total;
             const totalPages = Math.ceil(total / limit);
 
-            const [rows] = await pool.query(query, params);
+            const [eventsResult] = await pool.query(query, params);
 
             return {
                 success: true,
-                rows,
-                paginacion: {
+                eventsResult,
+                pagination: {
                     currentPage: page,
                     totalPages,
                     totalItems: total,
@@ -553,70 +549,71 @@ class PhotoGallery {
                 }
             };
 
-        } catch (error) {
-            throw new Error('Error al obtener eventos: ' + error.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al obtener evento: ' + errorMessage);
         }
     }
 
-    static async deleteEventoGaleria(eventoId) {
-        // Comprobaciones
-        if (!eventoId) {
+    static async deleteEventById(eventId: string) {
+
+        if (!eventId) {
             throw new Error('Se debe indicar el id del evento');
-        }
-        const existe = await this.existe('evento', eventoId);
-        if (!existe) {
-            throw new Error(`El evento con ID ${eventoId} no existe`);
         }
 
         try {
 
-            const queryEvento = 'DELETE FROM eventosGaleria WHERE id = ?'
-            await pool.query(queryEvento, [eventoId]);
+            const query = 'DELETE FROM eventGallery WHERE id = ?'
+            const [result] = await pool.query<ResultSetHeader>(query, [eventId]);
+
+            if (result.affectedRows === 0) {
+                return {
+                    success: false,
+                    message: 'No se encontró el evento seleccionado'
+                }
+            }
 
             return {
                 success: true,
-                message: 'El evento y las fotos han sido eliminados de la base de datos'
+                message: 'El evento y las fotos han sido eliminados'
             }
-        } catch (error) {
-            throw new Error('Error al eliminar el evento de la base de datos: ' + error.message)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al eliminar evento: ' + errorMessage);
         }
     }
 
-    static async deleteFotosGaleria(fotosIds) {
+    static async deletePhotosById(photosIds: string[]) {
 
-        if (!fotosIds || fotosIds.length === 0) {
+        if (!photosIds || photosIds.length === 0) {
             throw new Error('No se enviaron fotos para eliminar');
         }
 
         try {
-            // Eliminar múltiples fotos
-            const [result] = await pool.query(
-                'DELETE FROM fotosGaleria WHERE id IN (?)',
-                [fotosIds]
+            const [result] = await pool.query<ResultSetHeader>(
+                'DELETE FROM photoGallery WHERE id IN (?)',
+                [photosIds]
             );
 
             if (result.affectedRows === 0) {
                 throw new Error('No se encontraron fotos con los IDs proporcionados');
             }
 
-            if (result.affectedRows < fotosIds.length) {
+            if (result.affectedRows < photosIds.length) {
                 return {
                     success: true,
-                    message: `Eliminadas ${result.affectedRows} de ${fotosIds.length} solicitudes`,
-                    warning: 'Algunos IDs no existían en la base de datos',
-                    eliminadas: result.affectedRows,
-                    solicitadas: fotosIds.length
+                    message: `Eliminadas ${result.affectedRows} de ${photosIds.length} solicitudes`,
+                    warning: 'Algunos id no fueron encontrados'
                 };
             }
 
             return {
                 success: true,
-                message: `Eliminadas ${fotosIds.length} fotos`
+                message: `Eliminadas ${photosIds.length} fotos`
             };
-        } catch (error) {
-            throw new Error('Error al eliminar fotos: ' + error.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error('Error al eliminar fotos: ' + errorMessage);
         };
     }
 };
-
-export default FotosGaleria;
