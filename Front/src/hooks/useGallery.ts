@@ -1,6 +1,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useAlert } from "@/context/alertContext";
+import { getEventById } from "@/services/galleryServices";
 import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 
@@ -27,11 +28,24 @@ export default function useGallery <T = any>(FetchFunction: FetchFunction<T>) {
 
     const { showAlert } = useAlert();
 
-    const [items, setItems] = useState({
-        itemList: [],
+    const [photos, setPhotos] = useState<
+        {
+            photoList: [{
+                url: string,
+                description: string,
+                date: string
+            }] | [],
+            currentIndex: number | null,
+            totalPhotos: number,
+            eventInfo: {
+                eventId: string,
+                date: string
+            } | null
+        }>({
+        photoList: [],
         currentIndex: null,
-        totalItems: 0,
-        info: null
+        totalPhotos: 0,
+        eventInfo: null
     })
 
     const [loading, setLoading] = useState(false);
@@ -45,15 +59,18 @@ export default function useGallery <T = any>(FetchFunction: FetchFunction<T>) {
         try {
             setLoading(true);
 
-            if (eventId) {
-                const res = await getEventoPorId(config.eventoId);
-                const fotos = res.data.fotos || [];
-                setTodasLasFotos(fotos);
-                setTotalFotos(fotos.length);
-                setInfoEvento({
-                    nombre: res.data.nombre,
-                    fecha: res.data.fecha
-                })
+            if (photos.eventInfo) {
+                const res = await getEventById(photos.eventInfo.eventId);
+                const list = res.data.photos || [];
+                setPhotos(prev => ({
+                    photoList: list,
+                    totalPhotos: list.length,
+                    eventInfo: {
+                        name: res.data.event_name,
+                        date: res.data.date,
+                        description: res.data.description
+                    }
+                }))
             }
 
             // Traer todas las fotos (paginadas)

@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import MenuButton from "@/components/navigation/menuButton";
 import { websiteMap } from "@/components/navigation/websiteMap";
 import { Link, useLocation } from "react-router-dom";
-import { clearString } from "@/utils/clearString";
 
 
 export default function NavigationComponent() {
@@ -83,8 +82,8 @@ export default function NavigationComponent() {
                                 }
                             }}
                         >
-                            {section.subSections ? section.sectionTitle :
-                                <Link to={section.sectionTitle === 'Principal' ? '/' : `/${clearString(section.sectionTitle)}`}>{section.sectionTitle}</Link>}
+                            {section.sectionLink ?
+                                <Link to={section.sectionLink}>{section.sectionTitle}</Link> : section.sectionTitle}
                         </button>
                         
                         {/* Desktop */}
@@ -93,12 +92,12 @@ export default function NavigationComponent() {
                                 <ul
                                     className={`overflow-hidden hidden md:block md:absolute md:bg-gray-300 md:text-lg md:rounded md:shadow-xl md:shadow-black md:w-40 md:transform md:transition-all md:duration-300 md:origin-top md:z-70 ${displayList === section.sectionTitle ? "md:opacity-100 md:scale-y-100" : "md:opacity-0 md:scale-y-0 md:pointer-events-none"} border border-gray-800`}
                                 >
-                                    {section.subSections.map((i, index) => (
+                                    {section.subSections.map((subSection, index) => (
                                         <li
                                             key={`${section.sectionTitle}-${index}`}
                                             className="p-2 pl-3 text-gray-900 hover:bg-[#6E1538] hover:text-white"
                                             onClick={() => setDisplayList(null)}>
-                                            <Link to={`/${clearString(section.sectionTitle)}/${clearString(i)}`}>{i}</Link>
+                                            <Link to={subSection.subSectionLink}>{subSection.subSectionTitle}</Link>
                                         </li>
                                     ))}
                                 </ul>
@@ -115,7 +114,7 @@ export default function NavigationComponent() {
                                         opacity: displayList === section.sectionTitle ? 1 : 0,
                                     }}
                                 >
-                                    {section.subSections.map((i, index) => (
+                                    {section.subSections.map((subSection, index) => (
                                         <li
                                             key={`${section.sectionTitle}-${index}`}
                                             className="pl-6 py-2 active:bg-[#6E1538] active:text-white"
@@ -123,7 +122,7 @@ export default function NavigationComponent() {
                                                 setOpenMenu(false);
                                                 setDisplayList(null);
                                             }}>
-                                            <Link to={`/${clearString(section.sectionTitle)}/${clearString(i)}`}>{i}</Link>
+                                            <Link to={subSection.subSectionLink}>{subSection.subSectionTitle}</Link>
                                         </li>
                                     ))}
                                 </ul>

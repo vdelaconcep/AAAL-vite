@@ -1,38 +1,66 @@
 interface websiteMapObject {
     sectionTitle: string,
-    subSections?: string[]
+    sectionLink?: string, 
+    subSections?: {
+        subSectionTitle: string,
+        subSectionLink: string
+    }[]
 }
 
 export const websiteMap: websiteMapObject[] = [
     {
-        sectionTitle: 'Principal'
+        sectionTitle: 'Principal',
+        sectionLink: '/'
     },
     {
         sectionTitle: 'Nosotros',
         subSections: [
-            'Quiénes somos',
-            'Historia',
-            'Comisión Directiva',
-            'Mensajes de la Comunidad'
+            {
+                subSectionTitle: 'Comisión Directiva',
+                subSectionLink: '/nosotros/comisiondirectiva'
+            },
+            {
+                subSectionTitle: 'Mensajes de la Comunidad',
+                subSectionLink: '/nosotros/comunidad'
+            }
         ]
     },
     {
         sectionTitle: 'Novedades',
         subSections: [
-            'Institucional',
-            'Próximos Eventos',
-            'Clasificados'
+            {
+                subSectionTitle: 'Institucional',
+                subSectionLink: '/novedades/institucional'
+            },
+            {
+                subSectionTitle: 'Próximos Eventos',
+                subSectionLink: '/novedades/eventos'
+            },
+            {
+                subSectionTitle: 'Clasificados',
+                subSectionLink: '/novedades/clasificados'
+            }
         ]
     },
     {
         sectionTitle: 'Galería',
         subSections: [
-            'Fotos',
-            'Nuestros Vehículos',
-            'Motores estacionarios'
+            {
+                subSectionTitle: 'Fotos',
+                subSectionLink: '/galeria/fotos'
+            },
+            {
+                subSectionTitle: 'Nuestros Vehículos',
+                subSectionLink: '/galeria/vehiculos'
+            },
+            {
+                subSectionTitle: 'Motores estacionarios',
+                subSectionLink: '/galeria/motores'
+            }
         ]
     },
     {
-        sectionTitle: 'Contacto'
+        sectionTitle: 'Contacto',
+        sectionLink: '/contacto'
     }
 ]

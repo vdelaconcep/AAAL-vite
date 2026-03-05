@@ -30,6 +30,7 @@ const router = express.Router();
 
 router.get('/photos/:photoId', getPhotos);
 
+router.get('/events', getEvents);
 router.get('/events/:eventId', getEvents);
 
 router.post('/events/new', upload.array('photos', 20), newEventValidator, validationMid, createEvent);

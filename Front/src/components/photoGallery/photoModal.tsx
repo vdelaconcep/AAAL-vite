@@ -1,65 +1,88 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import formatearUTC from '@/utils/formatearUTC'
+import formatUTCDate from '@/utils/formatUTCDate';
 
-const PhotoModal = ({ gallery }) => {
+interface GalleryType {
+    openModal: boolean
+    currentPhoto: {
+        url: string,
+        event: string,
+        date: string,
+        description: string
+    }
+    currentIndex: number
+    totalPhotos: number
+    closeModal: () => void
+    next: () => void
+    previous: () => void
+    hasNext: boolean
+    hasPrevious: boolean
+    loading: boolean
+    eventInfo: {
+        name: string,
+        date: string
+    }
+}
+
+export default function PhotoModal({ gallery }: { gallery: GalleryType }) {
     const {
-        modalAbierto,
-        currentFoto,
+        openModal,
+        currentPhoto,
         currentIndex,
-        totalFotos,
-        cerrarModal,
-        siguiente,
-        anterior,
+        totalPhotos,
+        closeModal,
+        next,
+        previous,
         hasNext,
         hasPrevious,
-        cargando,
-        infoEvento
-    } = galeria;
+        loading,
+        eventInfo
+    } = gallery;
 
     useEffect(() => {
-        if (!modalAbierto) return;
+        if (!openModal) return;
 
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') cerrarModal();
-            if (e.key === 'ArrowRight' && hasNext) siguiente();
-            if (e.key === 'ArrowLeft' && hasPrevious) anterior();
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'ArrowRight' && hasNext) next();
+            if (e.key === 'ArrowLeft' && hasPrevious) previous();
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [modalAbierto, hasNext, hasPrevious, cerrarModal, siguiente, anterior]);
+    }, [openModal, hasNext, hasPrevious, closeModal, next, previous]);
 
     // Manejar gestos táctiles (swipe)
-    const handleTouchStart = (e) => {
-        e.currentTarget.dataset.touchStart = e.touches[0].clientX;
+    const handleTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+        e.currentTarget.dataset.touchStart = e.touches[0].clientX.toString();
     };
 
-    const handleTouchEnd = (e) => {
-        const touchStart = parseFloat(e.currentTarget.dataset.touchStart);
+    const handleTouchEnd = (e: React.TouchEvent<HTMLElement>) => {
+        const touchStart = parseFloat(e.currentTarget.dataset.touchStart ?? '');
+        if (isNaN(touchStart)) return;
         const touchEnd = e.changedTouches[0].clientX;
-        const diff = touchStart - touchEnd;
+        const diff = touchStart - touchEnd
 
         if (Math.abs(diff) > 50) {
             if (diff > 0 && hasNext) {
-                siguiente();
+                next();
             } else if (diff < 0 && hasPrevious) {
-                anterior();
+                previous();
             }
         }
     };
 
     return (
         <AnimatePresence>
-            {modalAbierto && (
+            {openModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
                     className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center"
-                    onClick={cerrarModal}
+                    onClick={closeModal}
                 >
                     <section
                         className="relative w-full h-full flex items-center justify-center p-4"
@@ -68,7 +91,7 @@ const PhotoModal = ({ gallery }) => {
                         onTouchEnd={handleTouchEnd}
                     >
                         <button
-                            onClick={cerrarModal}
+                            onClick={closeModal}
                             className="absolute top-4 right-4 text-white md:text-gray-300 md:hover:text-white md:transition-colors z-20 bg-black bg-opacity-50 rounded-full p-2 cursor-pointer"
                             aria-label="Cerrar"
                         >
@@ -76,7 +99,7 @@ const PhotoModal = ({ gallery }) => {
                         </button>
 
                         <button
-                            onClick={anterior}
+                            onClick={previous}
                             disabled={!hasPrevious}
                             className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default z-20 bg-black bg-opacity-50 rounded-full p-3"
                             aria-label="Anterior"
@@ -85,7 +108,7 @@ const PhotoModal = ({ gallery }) => {
                         </button>
 
                         <div className="max-w-7xl w-full h-full flex flex-col">
-                            {currentFoto ? (
+                            {currentPhoto ? (
                                 <>
                                     <article className="flex-1 flex items-center justify-center mb-4 min-h-0">
                                         <motion.img
@@ -93,13 +116,13 @@ const PhotoModal = ({ gallery }) => {
                                             initial={{ opacity: 0, scale: 0.95 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             transition={{ duration: 0.2 }}
-                                            src={currentFoto.url}
-                                            alt={currentFoto.descripcion || 'Foto'}
+                                            src={currentPhoto.url}
+                                            alt={currentPhoto.description || 'Foto'}
                                             className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl"
                                         />
                                     </article>
                                     <article className="hidden md:block mt-3 text-center text-sm text-gray-500">
-                                        Foto {currentIndex + 1} de {totalFotos}
+                                        Foto {currentIndex + 1} de {totalPhotos}
                                     </article>
 
                                     <motion.article
@@ -110,21 +133,21 @@ const PhotoModal = ({ gallery }) => {
                                     >
                                         <div className='flex flex-col md:flex-row md:items-baseline md:gap-2'>
                                             <h3 className="text-md md:text-xl font-semibold mb-2">
-                                                {infoEvento ? infoEvento.nombre : currentFoto.evento}
+                                                {eventInfo ? eventInfo.name : currentPhoto.event}
                                             </h3>
-                                            <span className='text-xs md:text-sm text-gray-400'>{infoEvento ? formatearUTC(infoEvento.fecha).slice(0, 8) : formatearUTC(currentFoto.fecha).slice(0, 8)}</span>
+                                            <span className='text-xs md:text-sm text-gray-400'>{eventInfo ? formatUTCDate(eventInfo.date).slice(0, 8) : formatUTCDate(currentPhoto.date).slice(0, 8)}</span>
                                         </div>
                                         
-                                        {currentFoto.descripcion && (
+                                        {currentPhoto.description && (
                                             <p className="text-gray-300 text-sm md:text-base mb-3">
-                                                {currentFoto.descripcion}
+                                                {currentPhoto.description}
                                             </p>
                                         )}
                                     </motion.article>
 
                                     <div className="md:hidden flex justify-between items-center mt-4 px-4">
                                         <button
-                                            onClick={anterior}
+                                            onClick={previous}
                                             disabled={!hasPrevious}
                                             className="text-white bg-black bg-opacity-50 rounded-full px-3 disabled:opacity-30"
                                             aria-label="Anterior"
@@ -133,11 +156,11 @@ const PhotoModal = ({ gallery }) => {
                                         </button>
 
                                         <div className="text-white text-sm">
-                                            {currentIndex + 1} / {totalFotos}
+                                            {currentIndex + 1} / {totalPhotos}
                                         </div>
 
                                         <button
-                                            onClick={siguiente}
+                                            onClick={next}
                                             disabled={!hasNext}
                                             className="text-white bg-black bg-opacity-50 rounded-full px-3 disabled:opacity-30"
                                             aria-label="Siguiente"
@@ -149,7 +172,7 @@ const PhotoModal = ({ gallery }) => {
                             ) : (
                                 <div className="flex items-center justify-center h-full">
                                     <div className="text-white text-xl">
-                                        {cargando ? (
+                                        {loading ? (
                                             <article className="flex flex-col items-center gap-4">
                                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
                                                 <span>Cargando foto...</span>
@@ -163,7 +186,7 @@ const PhotoModal = ({ gallery }) => {
                         </div>
 
                         <button
-                            onClick={siguiente}
+                            onClick={next}
                             disabled={!hasNext}
                             className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default z-20 bg-black bg-opacity-50 rounded-full p-3"
                             aria-label="Siguiente"
@@ -171,7 +194,7 @@ const PhotoModal = ({ gallery }) => {
                             <ChevronRight size={40} />
                         </button>
 
-                        {cargando && currentFoto && (
+                        {loading && currentPhoto && (
                             <article className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs bg-gray-800 px-3 py-1 rounded-full opacity-75">
                                 Cargando más fotos...
                             </article>

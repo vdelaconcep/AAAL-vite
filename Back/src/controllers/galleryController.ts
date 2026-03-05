@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { UploadApiResponse } from 'cloudinary';
 import type { NewEventDataBody, UpdateEventDataBody, Photo, Event } from '../types/galleryTypes.js';
 import Gallery from "../models/galleryModel.js";
 import dotenv from 'dotenv';
@@ -25,13 +26,23 @@ export async function createEvent(req: Request<{}, {}, NewEventDataBody, {}>, re
 
     try {
         const uploadPromises = files.map(file =>
-            cloudinary.uploader.upload(file.path, {
-                resource_type: "image",
-                folder: "eventos_galeria",
-                transformation: [
-                    { width: 1920, crop: "limit" },
-                    { quality: "auto:good" }
-                ]
+            new Promise<UploadApiResponse>((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        resource_type: "image",
+                        folder: "eventos_galeria",
+                        transformation: [
+                            { width: 1920, crop: "limit" },
+                            { quality: "auto:good" }
+                        ]
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else if (!result) reject(new Error('No se obtuvo respuesta de Cloudinary'));
+                        else resolve(result);
+                    }
+                );
+                stream.end(file.buffer);
             })
         );
 
@@ -102,13 +113,23 @@ export async function appendPhotos(req: Request<{eventId: string}>, res: Respons
 
     try {
         const uploadPromises = files.map(file =>
-            cloudinary.uploader.upload(file.path, {
-                resource_type: "image",
-                folder: "eventos_galeria",
-                transformation: [
-                    { width: 1920, crop: "limit" },
-                    { quality: "auto:good" }
-                ]
+            new Promise<UploadApiResponse>((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        resource_type: "image",
+                        folder: "eventos_galeria",
+                        transformation: [
+                            { width: 1920, crop: "limit" },
+                            { quality: "auto:good" }
+                        ]
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else if (!result) reject(new Error('No se obtuvo respuesta de Cloudinary'));
+                        else resolve(result);
+                    }
+                );
+                stream.end(file.buffer);
             })
         );
 

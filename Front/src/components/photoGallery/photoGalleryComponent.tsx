@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
-import ListaElementos from "@/components/galeria/listaElementos";
-import Busqueda from "@/components/galeria/busqueda";
-import Selector from "@/components/botones/selector";
+import Selector from "@/components/buttons/selector";
+import SearchByDate from "./searchByDate";
+/* import ListaElementos from "@/components/galeria/listaElementos"*/
+
+type ShowType = 'all' | 'event' | 'search'
 
 
-const Fotos = () => {
+export default function Photos() {
 
-    const [show, setShow] = useState('todas');
+    const [show, setShow] = useState<ShowType>('all');
 
-    const [fechaDesde, setFechaDesde] = useState('');
-    const [fechaHasta, setFechaHasta] = useState('');
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
     
-    const handleBusqueda = (desde, hasta) => {
-        setFechaDesde(desde);
-        setFechaHasta(hasta);
+    const handleSearch = (from: string, to: string) => {
+        setFromDate(from);
+        setToDate(to);
     };
 
     useEffect(() => {
-        setFechaDesde('');
-        setFechaHasta('');
+        setFromDate('');
+        setToDate('');
     }, [show]);
 
     return (
@@ -27,29 +29,29 @@ const Fotos = () => {
 
             <section className="mb-5 md:mb-7 w-full flex gap-1">
                 <Selector
-                    clase='flex-1 text-sm md:text-md lg:text-lg'
-                    texto='ver todas'
-                    seleccionado={show === 'todas'}
-                    accion={() => setShow('todas')} />
+                    addClass='flex-1 text-sm md:text-md lg:text-lg'
+                    text='ver todas'
+                    selected={show === 'all'}
+                    action={() => setShow('all')} />
                 <Selector
-                    clase='flex-1 text-sm md:text-md lg:text-lg'
-                    texto='por evento'
-                    seleccionado={show === 'evento'}
-                    accion={() => setShow('evento')} />
+                    addClass='flex-1 text-sm md:text-md lg:text-lg'
+                    text='por evento'
+                    selected={show === 'event'}
+                    action={() => setShow('event')} />
                 <Selector
-                    clase='flex-1 text-sm md:text-md lg:text-lg'
-                    texto='buscar'
-                    seleccionado={show === 'buscar'}
-                    accion={() => setShow('buscar')} />
+                    addClass='flex-1 text-sm md:text-md lg:text-lg'
+                    text='buscar'
+                    selected={show === 'search'}
+                    action={() => setShow('search')} />
             </section>
 
-            {show === 'buscar' &&
-                <Busqueda
-                onBuscar={handleBusqueda}
-                clase='mb-4'/>
+            {show === 'search' &&
+                <SearchByDate
+                    onSearch={handleSearch}
+                    addClass='mb-4'/>
             }
 
-            {(show === 'todas' || show === 'evento' || (show === 'buscar' && fechaDesde && fechaHasta)) ?
+            {(show === 'all' || show === 'event' || (show === 'search' && fromDate && toDate)) ?
                 <ListaElementos
                     key={show}
                     tipo={show}
@@ -58,5 +60,3 @@ const Fotos = () => {
         </main>
     );
 };
-
-export default Fotos;

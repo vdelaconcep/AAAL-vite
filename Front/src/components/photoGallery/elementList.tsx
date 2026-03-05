@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAlert } from '@/context/alertContext';
-import { usePaginacion } from '@/hooks/usePaginacion';
+import { usePagination } from '@/hooks/usePagination';
 import { useGaleriaModal } from '@/hooks/useGaleriaModal';
 import { getFotos, getFotosPorFecha, getEventos } from '@/services/galeriaServices';
 import Cargando from '@/components/otros/cargando';

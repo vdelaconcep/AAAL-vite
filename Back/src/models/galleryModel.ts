@@ -56,13 +56,13 @@ export default class Gallery {
                 event_id CHAR(36) NOT NULL,
                 url VARCHAR(1000) NOT NULL,
                 description VARCHAR(140),
-                order INT DEFAULT 0,
+                photo_order INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 modified_at TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 cloudinary_public_id VARCHAR(255) NOT NULL,
                 CONSTRAINT fk_photo_event
                 FOREIGN KEY (event_id) REFERENCES eventGallery(id) ON DELETE CASCADE,
-                INDEX idx_order (event_id, order)
+                INDEX idx_order (event_id, photo_order)
             )`;
             await connection.query(photoCreationQuery);
             console.log("Tabla 'photoGallery' creada ✅");
@@ -78,7 +78,7 @@ export default class Gallery {
             await connection.query(insertQueryEvent, eventValues);
 
             const insertQueryFotos = `
-                INSERT INTO photoGallery (id, event_id, url, order, cloudinary_public_id)
+                INSERT INTO photoGallery (id, event_id, url, photo_order, cloudinary_public_id)
                 VALUES ?
             `;
 
@@ -189,12 +189,12 @@ export default class Gallery {
             await connection.beginTransaction();
 
             const insertPhotosQuery = `
-                INSERT INTO photoGallery (id, event_id, url, order, cloudinary_public_id)
+                INSERT INTO photoGallery (id, event_id, url, photo_order, cloudinary_public_id)
                 VALUES ?
             `;
 
             const [result] = await connection.query<ExistsQuery[]>(
-                'SELECT EXISTS(SELECT 1 FROM eventGallery WHERE id = ?) as exists',
+                'SELECT EXISTS(SELECT 1 FROM eventGallery WHERE id = ?) as `exists`',
                 [eventId]
             );
 
@@ -208,7 +208,7 @@ export default class Gallery {
             }
 
             const [previous] = await connection.query <PreviousQuery[]>(
-                'SELECT COALESCE(MAX(order), 0) as maxOrder FROM photoGallery WHERE event_id = ?',
+                'SELECT COALESCE(MAX(photo_order), 0) as maxOrder FROM photoGallery WHERE event_id = ?',
                 [eventId]);
 
             const initial = previous[0].maxOrder
@@ -318,7 +318,7 @@ export default class Gallery {
                 p.id,
                 p.url,
                 p.description,
-                p.order,
+                p.photo_order,
                 p.created_at,
                 p.modified_at,
                 p.event_id,
@@ -449,7 +449,7 @@ export default class Gallery {
             }
             
             const [photosResult] = await pool.query(
-                'SELECT id, url, description, order, created_at, modified_at, cloudinary_public_id FROM photoGallery WHERE event_id=?',
+                'SELECT id, url, description, photo_order, created_at, modified_at, cloudinary_public_id FROM photoGallery WHERE event_id=? ORDER BY photo_order ASC',
                 [eventId]
             );
 
@@ -491,8 +491,8 @@ export default class Gallery {
                 COALESCE(photo_count.total_photos, 0) as total_photos
             FROM eventGallery e
             LEFT JOIN photoGallery p ON e.id = p.event_id
-                AND p.order = (
-                    SELECT MIN(order)
+                AND p.photo_order = (
+                    SELECT MIN(photo_order)
                     FROM photoGallery
                     WHERE event_id = e.id
                 )
@@ -540,7 +540,7 @@ export default class Gallery {
 
             return {
                 success: true,
-                eventsResult,
+                events: eventsResult,
                 pagination: {
                     currentPage: page,
                     totalPages,
