@@ -18,9 +18,9 @@ export default function AdminOptionsContent({ children }: AdminOptionsContentPro
         const hideList = (event: MouseEvent | TouchEvent) => {
             const target = event.target as HTMLElement;
 
-            const isClickingWhileAlert = target.closest('[role="alertdialog"]');
+            const isDialog = target.closest('[role="alertdialog"]') || target.closest('[role="confirmdialog"]');
 
-            if (showList && buttonRef.current && !buttonRef.current.contains(event.target as Node) && listRef.current && !listRef.current.contains(event.target as Node) && !isClickingWhileAlert) setShowList(false)
+            if (showList && buttonRef.current && !buttonRef.current.contains(event.target as Node) && listRef.current && !listRef.current.contains(event.target as Node) && !isDialog) setShowList(false)
         };
         
         document.addEventListener('mousedown', hideList);

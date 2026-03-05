@@ -3,7 +3,7 @@ import type { JSX } from "react"
 interface MainButtonProps {
     type?: 'button' | 'submit' | 'reset'
     text?: string | JSX.Element
-    action?: (...args: any []) => any
+    action?: (() => void | Promise<void>) | null
     addClass?: string
     disabled?: boolean
     secondary?: boolean
@@ -13,7 +13,7 @@ interface MainButtonProps {
 
 export default function MainButton({ type, text, action, addClass, disabled, secondary, forDelete }: MainButtonProps) {
 
-    const roundedClass = addClass?.includes('rounded') ? '' : 'rounded-xl'
+    const roundedClass = addClass?.includes('rounded') ? '' : 'rounded-md'
 
     const primaryColors = disabled ? 'bg-[#4e0e28] text-[#704858]' : 'bg-[#6E1538] text-white hover:bg-[#4e0e28]'
     const secondaryColors = disabled ? 'bg-cyan-900 text-cyan-100' : 'bg-cyan-800 hover:bg-cyan-900 text-white'
@@ -23,7 +23,7 @@ export default function MainButton({ type, text, action, addClass, disabled, sec
         <button
             className={`${secondary ? secondaryColors : forDelete? deleteColors : primaryColors} font-medium cursor-pointer p-2 px-3 ${roundedClass} shadow-gray-900 shadow-sm ${addClass || ''}`}
             type={type}
-            onClick={action}
+            onClick={action || undefined}
         >
             {text ?? (secondary ? 'cancelar' : 'Aceptar')}
         </button>

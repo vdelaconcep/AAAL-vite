@@ -1,8 +1,13 @@
 import { Oval } from 'react-loader-spinner';
 
-export default function LoadingComponent({isLoading}:{isLoading: boolean}) {
+interface LoadingComponentProps {
+    isLoading: boolean
+    addClass?: string
+}
+
+export default function LoadingComponent({ isLoading, addClass }: LoadingComponentProps) {
     return (isLoading ?
-        <article className='flex flex-col items-center justify-center h-full py-10'>
+        <article className={`flex flex-col items-center justify-center h-full py-10 ${addClass || ''}`}>
             <Oval
                 height={80}
                 width={80}
