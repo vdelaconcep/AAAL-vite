@@ -28,6 +28,7 @@ const upload = multer({
 
 const router = express.Router();
 
+router.get('/photos', getPhotos);
 router.get('/photos/:photoId', getPhotos);
 
 router.get('/events', getEvents);

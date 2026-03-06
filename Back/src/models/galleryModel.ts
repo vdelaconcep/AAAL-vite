@@ -305,7 +305,7 @@ export default class Gallery {
         ) {
 
         if (!photoId && (!page || !limit || page < 1 || limit < 1)) {
-            throw new Error('Se requieren parámetros válidos de paginación (page y limit)');
+            throw new Error('Se requiere el id de la foto o ingresar parámetros válidos de paginación (page y limit)');
         }
 
         if ((from && !to) || (!from && to)) {
@@ -373,7 +373,7 @@ export default class Gallery {
                 total = totalResult[0].total;
                 totalPages = Math.ceil(total / limit);
 
-                query += ' ORDER BY e.date DESC LIMIT ? OFFSET ?';
+                query += ' ORDER BY e.date DESC, p.photo_order ASC LIMIT ? OFFSET ?';
 
                 const offset = (page - 1) * limit;
                 params.push(limit, offset);
